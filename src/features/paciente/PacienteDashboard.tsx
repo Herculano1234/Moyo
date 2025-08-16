@@ -4,13 +4,13 @@ import DashboardHomePaciente from "./DashboardHomePaciente";
 import ConsultasPaciente from "./ConsultasPaciente";
 import ExamesPaciente from "./ExamesPaciente";
 import PerfilPaciente from "./PerfilPaciente";
-import MedicacoesPaciente from "./MedicacoesPaciente";
+
 
 const MENU = [
   { key: "dashboard", label: "Dashboard", icon: "fa-home" },
   { key: "consultas", label: "Consultas", icon: "fa-calendar-check" },
   { key: "exames", label: "Exames", icon: "fa-file-medical" },
-  { key: "medicacoes", label: "Medicações", icon: "fa-pills" },
+
   { key: "perfil", label: "Perfil", icon: "fa-user-circle" },
 ];
 
@@ -32,27 +32,37 @@ export default function PacienteDashboard() {
     window.location.href = "/";
   }
 
+  const [paciente, setPaciente] = useState<any>(null);
+  useEffect(() => {
+    const user = localStorage.getItem("moyo-user");
+    if (user) setPaciente(JSON.parse(user));
+  }, []);
+
   let Conteudo;
   if (menu === "dashboard") Conteudo = <DashboardHomePaciente />;
   else if (menu === "consultas") Conteudo = <ConsultasPaciente />;
   else if (menu === "exames") Conteudo = <ExamesPaciente />;
-  else if (menu === "perfil") Conteudo = <PerfilPaciente />;
-  else if (menu === "medicacoes") Conteudo = <MedicacoesPaciente />;
+  else if (menu === "perfil") Conteudo = <PerfilPaciente paciente={paciente} setPaciente={setPaciente} />;
+  // else if (menu === "medicacoes") Conteudo = <MedicacoesPaciente />; // Removido: tela de medicamentos desativada
 
   return (
-    <div className="flex min-h-screen bg-[#f0f7ff] overflow-hidden">
+    <div className="flex min-h-full bg-[#f0f7ff] w-full overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-br from-moyo-primary to-moyo-secondary text-white flex flex-col p-6 shadow-lg z-10">
+      <aside className="overflow-hidden w-64 bg-gradient-to-br from-moyo-primary to-moyo-secondary text-white flex flex-col p-6 shadow-lg z-10">
         <div className="flex items-center mb-8">
           <i className="fas fa-heartbeat text-2xl mr-3"></i>
           <h1 className="text-2xl font-bold">Moyo</h1>
         </div>
         <div className="text-center mb-6 border-b border-white/20 pb-6">
           <div className="w-20 h-20 rounded-full bg-white mx-auto flex items-center justify-center text-moyo-primary text-4xl mb-3">
-            <i className="fas fa-user"></i>
+            {paciente?.foto_perfil ? (
+              <img src={paciente.foto_perfil} alt="Foto de perfil" className="w-20 h-20 rounded-full object-cover" />
+            ) : (
+              <i className="fas fa-user"></i>
+            )}
           </div>
-          <h2 className="text-lg font-semibold">Herculano António</h2>
-          <p className="text-sm opacity-80">Paciente desde 2024</p>
+          <h2 className="text-lg font-semibold">{paciente?.nome || "Paciente"}</h2>
+          <p className="text-sm opacity-80">Paciente desde {paciente?.data_cadastro ? new Date(paciente.data_cadastro).getFullYear() : ""}</p>
         </div>
         <ul className="flex-1 space-y-2">
           {MENU.map(item => (

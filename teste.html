@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Studio Pley - Landing</title>
+  <style>
+    :root{
+      --bg1:#0f0b2e;
+      --bg2:#31174a;
+      --accent1:#ff6bcb;
+      --accent2:#6be0ff;
+      --glass: rgba(255,255,255,0.06);
+      --card: rgba(255,255,255,0.03);
+      --text: #dfe7ff;
+      --muted: #b6b7c6;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+
+    *{box-sizing: border-box}
+    html,body{height:100%; margin:0; background: radial-gradient(1200px 600px at 10% 10%, rgba(107,224,255,0.06), transparent), linear-gradient(180deg,var(--bg1), var(--bg2)); color:var(--text); -webkit-font-smoothing:antialiased;}
+
+    /* page container */
+    .wrap{max-width:1100px; margin:40px auto; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:18px; padding:36px; box-shadow: 0 20px 60px rgba(5,6,20,0.6); position:relative; overflow:hidden}
+
+    header{display:flex; align-items:center; justify-content:space-between; gap:20px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{width:54px; height:54px; border-radius:12px; background:linear-gradient(135deg,var(--accent1),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:700}
+    nav{display:flex; gap:18px; align-items:center}
+    nav a{color:var(--muted); text-decoration:none; font-size:14px}
+    .cta{background:linear-gradient(90deg,var(--accent1),var(--accent2)); padding:10px 16px; border-radius:12px; color:#071126; font-weight:700; text-decoration:none}
+
+    /* hero */
+    .hero{display:grid; grid-template-columns: 1fr 430px; gap:30px; align-items:center; margin-top:28px}
+    .hero-left h1{font-size:44px; margin:0 0 14px; line-height:1.02}
+    .hero-left p{color:var(--muted); max-width:520px}
+    .btn-primary{display:inline-block; margin-top:18px; padding:12px 18px; border-radius:12px; background:linear-gradient(90deg,var(--accent1),#ff9d7a); color:#071126; font-weight:700; text-decoration:none}
+
+    /* right visual */
+    .hero-right{position:relative; height:360px; display:flex; align-items:center; justify-content:center}
+    .card-3d{width:320px; height:200px; border-radius:14px; background:linear-gradient(180deg,#ffffff11,#00000022); box-shadow: 0 10px 30px rgba(12,8,40,0.6); display:flex; flex-direction:column; overflow:hidden; transform:translateY(10px);}
+    .card-3d .screen{flex:1; background:linear-gradient(90deg,#04112b,#07213b); display:flex; align-items:center; justify-content:center; color:var(--accent2); font-weight:700}
+    .plant{position:absolute; right:8px; bottom:12px; width:120px; transform:translateZ(0);}
+    .lamp{position:absolute; left:34px; bottom:22px; width:70px}
+
+    /* features row */
+    .features{display:flex; gap:18px; margin-top:36px}
+    .feature{flex:1; background:var(--card); padding:18px; border-radius:12px}
+    .feature h3{margin:0 0 8px}
+    .feature p{color:var(--muted); margin:0}
+
+    /* gallery */
+    .gallery{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:28px}
+    .thumb{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15)); padding:14px; border-radius:12px; min-height:120px; display:flex; align-items:center; justify-content:center}
+    .thumb img{width:100%; height:100%; object-fit:cover; border-radius:8px}
+
+    /* cards grid */
+    .cards{display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-top:28px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12)); padding:18px; border-radius:12px; min-height:140px; transition:transform .4s ease, box-shadow .4s ease}
+    .card:hover{transform:translateY(-10px); box-shadow:0 30px 50px rgba(4,7,25,0.5)}
+
+    /* bottom section */
+    .bottom{background:#0b0720; border-radius:12px; padding:20px; margin-top:26px}
+
+    footer{margin-top:18px; color:var(--muted); font-size:13px; text-align:center}
+
+    /* floating lights */
+    .float-dot{position:absolute; width:8px; height:8px; border-radius:50%; background:var(--accent2); box-shadow:0 0 18px rgba(107,224,255,0.6); opacity:.9}
+    .float-dot.pink{background:var(--accent1); box-shadow:0 0 22px rgba(255,107,203,0.45)}
+
+    /* reveal animations */
+    .reveal{opacity:0; transform:translateY(18px); transition:all .7s cubic-bezier(.2,.9,.2,1)}
+    .reveal.show{opacity:1; transform:none}
+
+    /* small screens */
+    @media (max-width:980px){.hero{grid-template-columns:1fr;}.hero-right{height:260px}.wrap{margin:18px;padding:20px}.gallery{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.gallery{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.hero-left h1{font-size:28px}}
+
+  </style>
+</head>
+<body>
+  <div class="wrap" id="page">
+    <header>
+      <div class="brand">
+        <div class="logo">SP</div>
+        <div>
+          <div style="font-weight:700">Studio Pley</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Studio - Experiências visuais</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#">Home</a>
+        <a href="#">Serviços</a>
+        <a href="#">Portfólio</a>
+        <a href="#">Preços</a>
+        <a class="cta" href="#">Agendar</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-left">
+        <h1 class="reveal">Studio Pley<br/>Stuodic</h1>
+        <p class="reveal">Criação de experiências digitais e ambientes 3D para apresentações, estúdios virtuais e landing pages imersivas. Animações suaves, paleta moderna e micro-interações para encantar visitantes.</p>
+        <a class="btn-primary reveal" href="#">Demonstração</a>
+      </div>
+
+      <div class="hero-right" id="heroRight">
+        <div class="card-3d reveal" id="screenCard">
+          <div class="screen">SOUND MIXSCREEN</div>
+          <div style="height:60px; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:linear-gradient(90deg,#00000022,#00000011);">
+            <div style="font-size:13px;color:var(--muted)">Demo</div>
+            <div style="font-size:13px;color:var(--muted)">v1.0</div>
+          </div>
+        </div>
+
+        <!-- decorative elements -->
+        <svg class="lamp" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+          <circle cx="50" cy="40" r="8" fill="#fff1c6" opacity="0.9"/>
+          <rect x="48" y="48" width="4" height="40" rx="2" fill="#fff1c6" opacity="0.6"/>
+        </svg>
+
+        <svg class="plant" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+          <path d="M20 150 C60 90, 120 90, 160 150" fill="none" stroke="#9ad4ff33" stroke-width="20" stroke-linecap="round"/>
+        </svg>
+
+      </div>
+    </section>
+
+    <div class="features">
+      <div class="feature reveal">
+        <h3>Horere Cronus</h3>
+        <p>Textos curtos e atrativos que explicam o serviço principal com ênfase no valor.</p>
+      </div>
+      <div class="feature reveal">
+        <h3>Nobe Fis</h3>
+        <p>Processos criativos, pipeline e entrega com qualidade e rapidez.</p>
+      </div>
+      <div class="feature reveal">
+        <h3>Umramed Pliie</h3>
+        <p>Suporte técnico e manutenção para projetos em produção.</p>
+      </div>
+    </div>
+
+    <div class="gallery">
+      <div class="thumb reveal"><img src="https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="thumb"/></div>
+      <div class="thumb reveal"><img src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="thumb"/></div>
+      <div class="thumb reveal"><img src="https://images.unsplash.com/photo-1505678261036-a3fcc5e884ee?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=placeholder" alt="thumb"/></div>
+    </div>
+
+    <div class="cards">
+      <div class="card reveal">
+        <h4>Buns Conmeap</h4>
+        <p style="color:var(--muted)">Mini interface com controles e gráficos.</p>
+      </div>
+      <div class="card reveal">
+        <h4>Soips tn Sore Sryuaiing</h4>
+        <p style="color:var(--muted)">Kits visuais e assets reutilizáveis.</p>
+      </div>
+      <div class="card reveal">
+        <h4>Moabinioes</h4>
+        <p style="color:var(--muted)">Integrações com APIs e serviços externos.</p>
+      </div>
+    </div>
+
+    <div class="bottom reveal">
+      <h3>Colmees</h3>
+      <p style="color:var(--muted); margin-top:8px">Comparado em tendência e design — exemplos de sessões e componentes.</p>
+    </div>
+
+    <footer>
+      © Studio Pley — Feito com carinho.  
+    </footer>
+
+    <!-- floating dots -->
+    <div class="float-dot" style="left:36px; top:80px;"></div>
+    <div class="float-dot pink" style="left:120px; top:140px; width:12px; height:12px;"></div>
+    <div class="float-dot" style="right:60px; top:42px; width:10px; height:10px;"></div>
+
+  </div>
+
+  <script>
+    // Small JS to animate reveals on scroll and add parallax to hero elements
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const revealEls = document.querySelectorAll('.reveal');
+      const heroRight = document.getElementById('heroRight');
+      const screenCard = document.getElementById('screenCard');
+
+      function handleReveal(){
+        revealEls.forEach(el=>{
+          const r = el.getBoundingClientRect();
+          if(r.top < window.innerHeight - 80) el.classList.add('show');
+        });
+      }
+      handleReveal();
+      window.addEventListener('scroll', handleReveal);
+
+      // mouse parallax on heroRight
+      heroRight.addEventListener('mousemove', (e)=>{
+        const r = heroRight.getBoundingClientRect();
+        const rx = (e.clientX - r.left) / r.width - 0.5; // -0.5..0.5
+        const ry = (e.clientY - r.top) / r.height - 0.5;
+        screenCard.style.transform = `translate3d(${rx*18}px, ${ry*10}px, 0) rotateX(${ry*6}deg) rotateY(${rx*8}deg)`;
+      });
+      heroRight.addEventListener('mouseleave', ()=>{
+        screenCard.style.transform = '';
+      });
+
+      // floating dots animation
+      const dots = document.querySelectorAll('.float-dot');
+      dots.forEach((d,i)=>{
+        const startX = parseFloat(d.style.left) || (window.innerWidth - parseFloat(d.style.right || 80));
+        const amp = 6 + i*3;
+        const speed = 3000 + i*600;
+        function loop(){
+          d.animate([
+            { transform: 'translateY(0px)' },
+            { transform: `translateY(${amp}px)` },     
+            { transform: 'translateY(0px)' }
+          ], { duration: speed, iterations: Infinity, easing: 'ease-in-out'});
+        }
+        loop();
+      });
+
+    });
+  </script>
+</body>
+</html>

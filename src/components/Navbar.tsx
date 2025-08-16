@@ -1,9 +1,42 @@
-﻿import React from "react";
-
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BellIcon } from "@heroicons/react/24/outline";
+interface Consulta {
+  id: number;
+  paciente_id: number;
+  profissional_id: number;
+  data_hora: string;
+  status: string;
+  prioridade?: string;
+  local?: string;
+}
 
 export default function Navbar() {
+
+  const [profissional, setProfissional] = useState<any>(null);
+    const [consultas, setConsultas] = useState<Consulta[]>([]);
+    const [busca, setBusca] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState("");
+  useEffect(() => {
+      const user = localStorage.getItem("moyo-user");
+      if (!user) {
+        setErro("Usuário não encontrado. Faça login novamente.");
+        setLoading(false);
+        return;
+      }
+      const profissionalData = JSON.parse(user);
+      setProfissional(profissionalData);
+      // Buscar consultas do profissional
+      fetch(`http://localhost:4000/profissionais/${profissionalData.id}/consultas`)
+        .then(async (res) => {
+          if (!res.ok) return setConsultas([]);
+          const data = await res.json();
+          setConsultas(data);
+        })
+        .catch(() => setConsultas([]))
+        .finally(() => setLoading(false));
+    }, []);
   const navigate = useNavigate();
   const handleLogout = () => {
     localStorage.clear();
@@ -16,10 +49,10 @@ export default function Navbar() {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-gray-500 dark:text-gray-400 text-sm">
-          Bom dia, Dr Herculano !
+          Bom dia, Dr {profissional?.nome} !
         </span>
         <img
-          src="https://randomuser.me/api/portraits/men/32.jpg"
+          src="{profissional.foto_perfil}"
           alt="avatar"
           className="w-10 h-10 rounded-full border-2 border-moyo-primary"
         />

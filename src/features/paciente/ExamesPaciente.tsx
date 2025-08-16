@@ -58,7 +58,7 @@ export default function ExamesPaciente() {
   const historico = exames.filter((e) => e.status !== "pendente");
 
   return (
-    <div className="flex-1 w-full flex flex-col min-h-full p-4">
+    <div className="flex-1 w-full flex flex-col min-h-full p-4 ">
       <h2 className="text-2xl font-bold text-moyo-primary mb-4 flex items-center gap-2">
         <i className="fas fa-vials"></i> Exames
       </h2>

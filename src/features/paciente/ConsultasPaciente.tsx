@@ -1,23 +1,186 @@
-import React, { useState, useEffect } from "react";
+// App.jsx
+import React, { useState, useEffect, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const perguntasTriagem = [
-  { id: 1, texto: "Está sentindo febre?", tipo: "select", opcoes: ["Leve", "Moderado", "Alto"] },
-  { id: 2, texto: "Está com dor?", tipo: "select", opcoes: ["Leve", "Moderado", "Alto"] },
-  { id: 3, texto: "Sintomas respiratórios?", tipo: "select", opcoes: ["Leve", "Moderado", "Alto"] },
-  { id: 4, texto: "Qual a urgência do seu caso?", tipo: "select", opcoes: ["Baixa", "Média", "Alta"] },
-  { id: 5, texto: "Descreva seus sintomas", tipo: "textarea" },
+// Unidades hospitalares de Angola (foco em Luanda)
+const unidadesHospitalares = [
+  {
+    id: "1",
+    nome: "Hospital Geral de Luanda",
+    lat: -8.8383,
+    lng: 13.2344,
+    especialidades: ["Cardiologia", "Clínica Geral", "Pediatria", "Ortopedia"],
+    areas: ["Emergência", "Consulta", "Exames"],
+    endereco: "Rua Major Kanhangulo, Luanda",
+    datasDisponiveis: ["2025-07-30", "2025-07-31", "2025-08-01", "2025-08-03"]
+  },
+  {
+    id: "2",
+    nome: "Clínica Sagrada Esperança",
+    lat: -8.8155,
+    lng: 13.2300,
+    especialidades: ["Ortopedia", "Pediatria", "Dermatologia", "Oftalmologia"],
+    areas: ["Emergência", "Consulta"],
+    endereco: "Rua da Missão, Luanda",
+    datasDisponiveis: ["2025-07-30", "2025-08-02", "2025-08-05"]
+  },
+  {
+    id: "3",
+    nome: "Hospital Josina Machel",
+    lat: -8.8126,
+    lng: 13.2371,
+    especialidades: ["Cardiologia", "Neurologia", "Oftalmologia", "Ginecologia"],
+    areas: ["Consulta", "Exames"],
+    endereco: "Avenida Comandante Valódia, Luanda",
+    datasDisponiveis: ["2025-07-31", "2025-08-01", "2025-08-04"]
+  },
+  {
+    id: "4",
+    nome: "Hospital Militar",
+    lat: -8.8308,
+    lng: 13.2450,
+    especialidades: ["Clínica Geral", "Cirurgia", "Ortopedia", "Pediatria"],
+    areas: ["Emergência", "Consulta", "Cirurgia"],
+    endereco: "Rua 17 de Setembro, Luanda",
+    datasDisponiveis: ["2025-08-01", "2025-08-02", "2025-08-03"]
+  },
+  {
+    id: "5",
+    nome: "Clínica Multiperfil",
+    lat: -8.8392,
+    lng: 13.2415,
+    especialidades: ["Dermatologia", "Oftalmologia", "Cardiologia", "Clínica Geral"],
+    areas: ["Consulta", "Exames"],
+    endereco: "Rua Amílcar Cabral, Luanda",
+    datasDisponiveis: ["2025-07-30", "2025-08-01", "2025-08-05"]
+  },
+  {
+    id: "6",
+    nome: "Hospital Americo Boavida",
+    lat: -8.8180,
+    lng: 13.2345,
+    especialidades: ["Clínica Geral", "Pediatria", "Ginecologia", "Ortopedia"],
+    areas: ["Emergência", "Consulta", "Internamento"],
+    endereco: "Largo do Kinaxixi, Luanda",
+    datasDisponiveis: ["2025-07-31", "2025-08-02", "2025-08-04"]
+  },
+  {
+    id: "7",
+    nome: "Hospital Maria Pia",
+    lat: -8.8035,
+    lng: 13.2412,
+    especialidades: ["Pediatria", "Neonatologia", "Cardiologia Infantil"],
+    areas: ["Consulta", "Internamento"],
+    endereco: "Bairro Ingombota, Luanda",
+    datasDisponiveis: ["2025-08-03", "2025-08-05", "2025-08-06"]
+  }
 ];
 
+// Ícones personalizados
+const hospitalIcon = new L.Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const userIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149060.png',
+  iconSize: [25, 25],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12]
+});
+
+// Interfaces
 interface Consulta {
   id: string;
   especialidade: string;
   data: string;
   status: "pendente" | "concluida" | "cancelada";
-  triagem?: {
-    [key: number]: string;
-  };
+  triagem?: { [key: number]: string };
+  unidadeId?: string;
+  unidadeNome?: string;
+  nivelUrgencia?: string;
 }
 
+interface HospitalUnit {
+  id: string;
+  nome: string;
+  lat: number;
+  lng: number;
+  especialidades: string[];
+  areas: string[];
+  endereco: string;
+  distancia?: number;
+  datasDisponiveis: string[];
+}
+
+// Perguntas de triagem atualizadas
+const perguntasTriagem = [
+  { 
+    id: 1, 
+    texto: "Descreva seus sintomas principais (incluindo quando começaram e como evoluíram)", 
+    tipo: "textarea",
+    categoria: "Sintomas Atuais"
+  },
+  {
+    id: 2,
+    texto: "Qual a intensidade dos seus sintomas?",
+    tipo: "select",
+    opcoes: ["Leve (não interfere nas atividades)", "Moderada (dificulta atividades)", "Intensa (impossibilita atividades)", "Insuportável"],
+    categoria: "Sintomas Atuais",
+    peso: [1, 2, 3, 4]
+  },
+  {
+    id: 3,
+    texto: "Você tem alguma condição médica pré-existente?",
+    tipo: "select",
+    opcoes: ["Não", "Hipertensão", "Diabetes", "Problemas cardíacos", "Doença respiratória", "Outra"],
+    categoria: "Histórico Médico",
+    peso: [0, 1, 1, 2, 2, 1]
+  },
+  {
+    id: 4,
+    texto: "Você faz uso de algum medicamento regularmente? Se sim, quais?",
+    tipo: "textarea",
+    categoria: "Histórico Médico"
+  },
+  {
+    id: 5,
+    texto: "Você já foi hospitalizado nos últimos 3 meses?",
+    tipo: "select",
+    opcoes: ["Não", "Sim, por doença", "Sim, por cirurgia", "Sim, por acidente"],
+    categoria: "Fatores de Risco",
+    peso: [0, 2, 1, 2]
+  },
+  {
+    id: 6,
+    texto: "Você possui algum dos seguintes sintomas? (marque todos que se aplicam)",
+    tipo: "multiselect",
+    opcoes: ["Febre acima de 38°C", "Dificuldade para respirar", "Dor no peito", "Sangramento intenso", "Tontura ou desmaio", "Vômitos persistentes", "Nenhum destes"],
+    categoria: "Sintomas de Alerta",
+    peso: [3, 4, 4, 3, 2, 2, 0]
+  },
+  {
+    id: 7,
+    texto: "Descreva como os sintomas estão afetando sua rotina diária",
+    tipo: "textarea",
+    categoria: "Impacto na Vida"
+  },
+  {
+    id: 8,
+    texto: "Há algo mais que gostaria de informar ao profissional de saúde?",
+    tipo: "textarea",
+    categoria: "Informações Adicionais"
+  }
+];
+
+// Funções de armazenamento
 function getConsultas(): Consulta[] {
   try {
     return JSON.parse(localStorage.getItem("moyo-consultas") || "[]");
@@ -30,11 +193,746 @@ function saveConsultas(consultas: Consulta[]) {
   localStorage.setItem("moyo-consultas", JSON.stringify(consultas));
 }
 
+// Função para calcular distância entre coordenadas
+function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Raio da Terra em km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distância em km
+}
+
+// Função para calcular urgência com base nas respostas
+function calcularUrgencia(respostas) {
+  let pontuacao = 0;
+  
+  // Calcular pontuação com base nas respostas
+  perguntasTriagem.forEach(pergunta => {
+    if (pergunta.peso && respostas[pergunta.id]) {
+      if (pergunta.tipo === "select" || pergunta.tipo === "multiselect") {
+        const opcaoIndex = pergunta.opcoes.indexOf(respostas[pergunta.id]);
+        if (opcaoIndex !== -1 && pergunta.peso[opcaoIndex]) {
+          pontuacao += pergunta.peso[opcaoIndex];
+        }
+      }
+    }
+  });
+  
+  // Análise de texto nas respostas abertas
+  if (respostas[1]) {
+    const sintomas = respostas[1].toLowerCase();
+    
+    // Palavras-chave que aumentam a urgência
+    const palavrasUrgentes = ["forte", "insuportável", "intensa", "grave", "sangue", "vômito", "desmaio", "tontura", "falta de ar", "dor no peito"];
+    palavrasUrgentes.forEach(palavra => {
+      if (sintomas.includes(palavra)) pontuacao += 2;
+    });
+  }
+  
+  if (respostas[4]) {
+    const medicamentos = respostas[4].toLowerCase();
+    if (medicamentos.includes("anticoagulante") || medicamentos.includes("insulina")) {
+      pontuacao += 2;
+    }
+  }
+  
+  if (respostas[7]) {
+    const impacto = respostas[7].toLowerCase();
+    if (impacto.includes("não consigo trabalhar") || impacto.includes("não consigo levantar")) {
+      pontuacao += 3;
+    }
+    else if (impacto.includes("dificuldade")) {
+      pontuacao += 1;
+    }
+  }
+  
+  // Classificar com base na pontuação
+  if (pontuacao >= 15) return { nivel: "Emergência", cor: "#dc2626" };
+  if (pontuacao >= 10) return { nivel: "Alta", cor: "#ea580c" };
+  if (pontuacao >= 5) return { nivel: "Média", cor: "#ca8a04" };
+  return { nivel: "Baixa", cor: "#16a34a" };
+}
+
+// Componente MapaHospital
+const MapaHospital = ({ 
+  mapCenter, 
+  mapZoom, 
+  userLocation, 
+  unidadesFiltradas, 
+  onSelectUnidade,
+  unidadeSelecionada
+}) => {
+  return (
+    <div className="w-full h-[400px] lg:h-[500px] rounded-xl overflow-hidden shadow-lg transition-all duration-500">
+      <MapContainer 
+        center={mapCenter} 
+        zoom={mapZoom} 
+        style={{ height: "100%", width: "100%" }}
+        zoomControl={false}
+      >
+        <TileLayer 
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        {userLocation && (
+          <Marker position={userLocation} icon={userIcon}>
+            <Popup className="font-bold">Sua localização atual</Popup>
+          </Marker>
+        )}
+        {unidadesFiltradas.map(unidade => (
+          <Marker 
+            key={unidade.id} 
+            position={[unidade.lat, unidade.lng]} 
+            icon={hospitalIcon} 
+            eventHandlers={{ 
+              click: () => onSelectUnidade(unidade.id),
+              mouseover: () => onSelectUnidade(unidade.id)
+            }}
+          >
+            <Popup className="min-w-[250px]">
+              <div className={`p-2 ${unidadeSelecionada === unidade.id ? 'bg-blue-50' : ''}`}>
+                <b className="text-blue-600">{unidade.nome}</b><br />
+                <div className="text-sm text-gray-600">{unidade.endereco}</div>
+                <div className="mt-1">
+                  <span className="font-medium">Especialidades:</span> 
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {unidade.especialidades.slice(0, 3).map(esp => (
+                      <span key={esp} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                        {esp}
+                      </span>
+                    ))}
+                    {unidade.especialidades.length > 3 && (
+                      <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                        +{unidade.especialidades.length - 3}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {unidade.distancia && (
+                  <div className="mt-2 text-sm font-medium">
+                    <i className="fas fa-location-dot text-blue-500 mr-1"></i>
+                    {unidade.distancia.toFixed(1)} km de distância
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
+};
+
+// Componente FormularioAgendamento
+const FormularioAgendamento = ({
+  etapa,
+  especialidade,
+  setEspecialidade,
+  data,
+  setData,
+  unidadeSelecionada,
+  setUnidadeSelecionada,
+  unidadesFiltradas,
+  unidadesHospitalares,
+  onVoltar,
+  onContinuar,
+  onSubmit,
+  loading,
+  erro,
+  userLocation
+}) => {
+  const especialidadesDisponiveis = useMemo(() => {
+    const todas = unidadesHospitalares.flatMap(u => u.especialidades);
+    return Array.from(new Set(todas));
+  }, [unidadesHospitalares]);
+
+  const unidadesComEspecialidade = useMemo(() => {
+    if (!especialidade) return [];
+    
+    return unidadesHospitalares.filter(unidade =>
+      unidade.especialidades.some(esp =>
+        esp.toLowerCase().includes(especialidade.toLowerCase())
+      )
+    );
+  }, [especialidade, unidadesHospitalares]);
+
+  const unidadesComDistancia = useMemo(() => {
+    if (!userLocation) return unidadesComEspecialidade;
+    
+    return unidadesComEspecialidade.map(unidade => ({
+      ...unidade,
+      distancia: calcularDistancia(
+        userLocation[0],
+        userLocation[1],
+        unidade.lat,
+        unidade.lng
+      )
+    })).sort((a, b) => (a.distancia || Infinity) - (b.distancia || Infinity));
+  }, [unidadesComEspecialidade, userLocation]);
+
+  const datasDisponiveis = useMemo(() => {
+    if (!unidadeSelecionada) return [];
+    const unidade = unidadesHospitalares.find(u => u.id === unidadeSelecionada);
+    return unidade ? unidade.datasDisponiveis : [];
+  }, [unidadeSelecionada, unidadesHospitalares]);
+
+  return (
+    <div className="space-y-6">
+      {etapa === 1 && (
+        <div className="space-y-4 animate-fadein">
+          <div className="flex justify-between items-center">
+            <h4 className="font-bold text-lg text-gray-700">Selecione a especialidade médica</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {especialidadesDisponiveis.slice(0, 8).map(esp => (
+              <button
+                key={esp}
+                type="button"
+                className={`px-3 py-2 rounded-lg font-medium text-sm shadow transition-all duration-300 flex items-center justify-center
+                  ${especialidade === esp 
+                    ? 'bg-moyo-primary text-white scale-105' 
+                    : 'bg-white hover:bg-moyo-primary/10 text-gray-700 border border-gray-200'}`}
+                onClick={() => setEspecialidade(esp)}
+              >
+                {esp}
+              </button>
+            ))}
+          </div>
+          
+          <div className="mt-6">
+            <button
+              onClick={() => onContinuar(2)}
+              className="bg-moyo-primary text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition transform hover:scale-105 disabled:opacity-50"
+              disabled={!especialidade}
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {etapa === 2 && (
+        <div className="space-y-6 animate-fadein">
+          <div className="flex justify-between items-center">
+            <h4 className="font-bold text-lg text-gray-700">Selecione uma unidade</h4>
+            <button
+              onClick={onVoltar}
+              className="text-moyo-primary hover:underline text-sm"
+            >
+              Alterar especialidade
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto p-1">
+            {unidadesComDistancia.map(unidade => (
+              <div
+                key={unidade.id}
+                className={`border rounded-xl p-4 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
+                  unidadeSelecionada === unidade.id
+                    ? 'border-moyo-primary ring-2 ring-moyo-primary/30 bg-moyo-primary/5'
+                    : 'border-gray-200 hover:border-moyo-primary'
+                }`}
+                onClick={() => setUnidadeSelecionada(unidade.id)}
+              >
+                <div className="font-bold text-moyo-primary">{unidade.nome}</div>
+                <div className="text-sm text-gray-600 mt-1">{unidade.endereco}</div>
+                
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {unidade.especialidades.slice(0, 3).map(esp => (
+                    <span 
+                      key={esp} 
+                      className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                    >
+                      {esp}
+                    </span>
+                  ))}
+                </div>
+                
+                {unidade.distancia && (
+                  <div className="mt-3 flex items-center text-sm text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-moyo-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {unidade.distancia.toFixed(1)} km
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex justify-between mt-6">
+            <button
+              onClick={onVoltar}
+              className="px-6 py-2 rounded-lg font-bold border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+            >
+              Voltar
+            </button>
+            <button
+              onClick={() => onContinuar(3)}
+              className="bg-moyo-primary text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition transform hover:scale-105 disabled:opacity-50"
+              disabled={!unidadeSelecionada}
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {etapa === 3 && (
+        <div className="space-y-6 animate-fadein">
+          <div className="flex justify-between items-center">
+            <h4 className="font-bold text-lg text-gray-700">Selecione uma data</h4>
+            <button
+              onClick={onVoltar}
+              className="text-moyo-primary hover:underline text-sm"
+            >
+              Alterar unidade
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {datasDisponiveis.map(dt => (
+              <button
+                key={dt}
+                type="button"
+                className={`px-4 py-3 rounded-xl font-bold shadow transition-all duration-300 flex flex-col items-center justify-center
+                  ${data === dt 
+                    ? 'bg-moyo-primary text-white scale-105' 
+                    : 'bg-white hover:bg-moyo-primary/10 text-gray-700 border border-gray-200'}`}
+                onClick={() => setData(dt)}
+              >
+                <span className="text-lg font-bold">
+                  {new Date(dt).getDate()}
+                </span>
+                <span className="text-xs">
+                  {new Date(dt).toLocaleDateString('pt-BR', { month: 'short' })}
+                </span>
+              </button>
+            ))}
+          </div>
+          
+          {erro && (
+            <div className="text-red-500 bg-red-50 p-3 rounded-lg animate-shake">
+              {erro}
+            </div>
+          )}
+          
+          <div className="flex justify-between mt-6">
+            <button
+              onClick={onVoltar}
+              className="px-6 py-2 rounded-lg font-bold border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+            >
+              Voltar
+            </button>
+            <button
+              onClick={onSubmit}
+              className="bg-moyo-primary text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition transform hover:scale-105 disabled:opacity-50"
+              disabled={!data}
+            >
+              Finalizar Agendamento
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente TriagemModal
+const TriagemModal = ({ 
+  show, 
+  onClose, 
+  onComplete, 
+  unidadeNome,
+  loading
+}) => {
+  const [respostas, setRespostas] = useState({});
+  const [etapaTriagem, setEtapaTriagem] = useState(0);
+  const [urgencia, setUrgencia] = useState(null);
+  
+  const handleChange = (id, valor) => {
+    setRespostas(prev => ({ ...prev, [id]: valor }));
+  };
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Calcular urgência antes de completar
+    const nivelUrgencia = calcularUrgencia(respostas);
+    setUrgencia(nivelUrgencia);
+    
+    // Passar as respostas e a urgência calculada
+    onComplete(respostas, nivelUrgencia);
+  };
+  
+  const progresso = ((etapaTriagem + 1) / perguntasTriagem.length) * 100;
+  
+  if (!show) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadein p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-popin">
+        <div className="bg-moyo-primary text-white p-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">Triagem Digital</h3>
+            <button 
+              onClick={onClose}
+              className="text-white hover:text-gray-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-2 text-sm">
+            <span className="font-medium">Unidade:</span> {unidadeNome}
+          </div>
+        </div>
+        
+        <div className="p-1 bg-gray-200">
+          <div 
+            className="h-2 bg-moyo-secondary transition-all duration-500 ease-out"
+            style={{ width: `${progresso}%` }}
+          ></div>
+        </div>
+        
+        <form 
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto p-6"
+        >
+          {etapaTriagem < perguntasTriagem.length ? (
+            <div className="space-y-8 animate-fadein">
+              <div>
+                <h4 className="text-sm font-semibold text-moyo-primary mb-1">
+                  {perguntasTriagem[etapaTriagem].categoria}
+                </h4>
+                <h3 className="text-xl font-bold text-gray-800">
+                  {perguntasTriagem[etapaTriagem].texto}
+                </h3>
+              </div>
+              
+              {perguntasTriagem[etapaTriagem].tipo === "select" && (
+                <div className="space-y-4">
+                  {perguntasTriagem[etapaTriagem].opcoes.map((opcao, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      className={`w-full text-left p-4 rounded-xl border transition-all duration-300 ${
+                        respostas[perguntasTriagem[etapaTriagem].id] === opcao
+                          ? 'border-moyo-primary bg-moyo-primary/10 text-moyo-primary font-bold'
+                          : 'border-gray-200 hover:border-moyo-primary'
+                      }`}
+                      onClick={() => handleChange(perguntasTriagem[etapaTriagem].id, opcao)}
+                    >
+                      {opcao}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {perguntasTriagem[etapaTriagem].tipo === "multiselect" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {perguntasTriagem[etapaTriagem].opcoes.map((opcao, index) => {
+                    const selecionado = respostas[perguntasTriagem[etapaTriagem].id]?.includes(opcao);
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        className={`p-3 rounded-lg border transition-all duration-300 flex items-center ${
+                          selecionado
+                            ? 'border-moyo-primary bg-moyo-primary/10 text-moyo-primary font-bold'
+                            : 'border-gray-200 hover:border-moyo-primary'
+                        }`}
+                        onClick={() => {
+                          const respostasAtuais = respostas[perguntasTriagem[etapaTriagem].id] || [];
+                          let novasRespostas = [...respostasAtuais];
+                          
+                          if (selecionado) {
+                            novasRespostas = novasRespostas.filter(r => r !== opcao);
+                          } else {
+                            if (opcao === "Nenhum destes") {
+                              novasRespostas = [opcao];
+                            } else {
+                              // Remover "Nenhum destes" se estiver selecionado
+                              novasRespostas = novasRespostas.filter(r => r !== "Nenhum destes");
+                              novasRespostas.push(opcao);
+                            }
+                          }
+                          
+                          handleChange(perguntasTriagem[etapaTriagem].id, novasRespostas);
+                        }}
+                      >
+                        <div className={`w-5 h-5 rounded border mr-3 flex items-center justify-center ${
+                          selecionado ? 'bg-moyo-primary border-moyo-primary' : 'border-gray-400'
+                        }`}>
+                          {selecionado && (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        {opcao}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {perguntasTriagem[etapaTriagem].tipo === "textarea" && (
+                <textarea
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:ring focus:ring-moyo-primary focus:border-moyo-primary min-h-[120px]"
+                  value={respostas[perguntasTriagem[etapaTriagem].id] || ""}
+                  onChange={e => handleChange(perguntasTriagem[etapaTriagem].id, e.target.value)}
+                  placeholder="Por favor, descreva em detalhes..."
+                  required
+                />
+              )}
+              
+              <div className="flex justify-between">
+                {etapaTriagem > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setEtapaTriagem(prev => prev - 1)}
+                    className="px-6 py-3 rounded-lg font-bold border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                  >
+                    Voltar
+                  </button>
+                )}
+                
+                <button
+                  type={etapaTriagem === perguntasTriagem.length - 1 ? "submit" : "button"}
+                  onClick={() => {
+                    if (etapaTriagem < perguntasTriagem.length - 1) {
+                      setEtapaTriagem(prev => prev + 1);
+                    }
+                  }}
+                  className="bg-moyo-primary text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition ml-auto"
+                >
+                  {etapaTriagem === perguntasTriagem.length - 1 ? 'Finalizar Triagem' : 'Próxima'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="animate-fadein">
+              <div className="text-center py-6">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">Resultado da Triagem</h3>
+                
+                <div className="max-w-md mx-auto mb-8">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-gray-600">Baixa</span>
+                    <span className="text-sm text-gray-600">Emergência</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full transition-all duration-1000 ease-out"
+                      style={{ 
+                        width: `${urgencia ? 
+                          (urgencia.nivel === "Baixa" ? 25 : 
+                           urgencia.nivel === "Média" ? 50 : 
+                           urgencia.nivel === "Alta" ? 75 : 100) : 0}%`, 
+                        backgroundColor: urgencia?.cor || '#16a34a'
+                      }}
+                    ></div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <span className={`px-4 py-2 rounded-full font-bold ${
+                      urgencia?.nivel === "Baixa" ? "bg-green-100 text-green-800" :
+                      urgencia?.nivel === "Média" ? "bg-yellow-100 text-yellow-800" :
+                      urgencia?.nivel === "Alta" ? "bg-orange-100 text-orange-800" : "bg-red-100 text-red-800"
+                    }`}>
+                      Nível de Urgência: {urgencia?.nivel}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-xl p-6 text-left mb-8">
+                  <h4 className="font-bold text-lg mb-3">Recomendações:</h4>
+                  
+                  {urgencia?.nivel === "Baixa" && (
+                    <p>
+                      Seus sintomas sugerem uma condição de baixa urgência. Recomendamos que você mantenha 
+                      sua consulta agendada. Enquanto isso, descanse e monitore seus sintomas. Se houver 
+                      qualquer piora, retorne para reavaliação.
+                    </p>
+                  )}
+                  
+                  {urgencia?.nivel === "Média" && (
+                    <p>
+                      Seus sintomas indicam uma condição de média urgência. Recomendamos que você procure 
+                      atendimento dentro das próximas 24-48 horas. Enquanto isso, evite atividades 
+                      extenuantes e monitore seus sintomas. Se houver piora, procure atendimento imediatamente.
+                    </p>
+                  )}
+                  
+                  {urgencia?.nivel === "Alta" && (
+                    <p>
+                      Seus sintomas sugerem uma condição de alta urgência. Recomendamos que você procure 
+                      atendimento médico nas próximas 6-12 horas. Não dirija sozinho e evite qualquer 
+                      esforço físico. Se possível, peça para alguém acompanhá-lo ao serviço de saúde.
+                    </p>
+                  )}
+                  
+                  {urgencia?.nivel === "Emergência" && (
+                    <p className="text-red-700 font-medium">
+                      <span className="font-bold">ATENÇÃO:</span> Seus sintomas indicam uma possível emergência médica. 
+                      Recomendamos que você procure atendimento IMEDIATAMENTE. Não espere pela consulta 
+                      agendada. Dirija-se ao serviço de emergência mais próximo ou ligue para o 112.
+                    </p>
+                  )}
+                  
+                  <div className="mt-6">
+                    <h4 className="font-bold mb-2">Resumo dos sintomas:</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      {perguntasTriagem.map(pergunta => {
+                        const resposta = respostas[pergunta.id];
+                        if (!resposta) return null;
+                        
+                        return (
+                          <li key={pergunta.id}>
+                            <span className="font-medium">{pergunta.texto}:</span>{" "}
+                            {Array.isArray(resposta) ? resposta.join(", ") : resposta}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setEtapaTriagem(0)}
+                    className="px-6 py-3 rounded-lg font-bold border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                  >
+                    Revisar Respostas
+                  </button>
+                  
+                  <button
+                    type="submit"
+                    className="bg-moyo-primary text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition"
+                    disabled={loading}
+                  >
+                    {loading ? 'Finalizando...' : 'Confirmar Agendamento'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Componente ConsultaCard
+const ConsultaCard = ({ consulta, onCancel, loading }) => {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <div className={`border rounded-xl p-4 transition-all duration-300 ${expanded ? 'bg-white shadow-lg' : 'bg-gray-50'}`}>
+      <div className="flex justify-between items-start">
+        <div>
+          <div className="font-bold text-moyo-primary">{consulta.especialidade}</div>
+          <div className="text-sm text-gray-600 mt-1">
+            {new Date(consulta.data).toLocaleDateString('pt-BR', { 
+              weekday: 'short', 
+              day: '2-digit', 
+              month: 'short', 
+              year: 'numeric' 
+            })}
+          </div>
+          <div className="text-sm font-medium mt-1">{consulta.unidadeNome}</div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {consulta.status === "pendente" && (
+            <button
+              onClick={() => onCancel(consulta.id)}
+              className="text-red-500 hover:text-red-700 text-sm font-medium px-3 py-1 rounded-lg bg-red-50 hover:bg-red-100 transition"
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+          )}
+          
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-moyo-primary hover:text-moyo-secondary"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className={`h-5 w-5 transform transition-transform ${expanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      {expanded && (
+        <div className="mt-4 pt-4 border-t border-gray-100 animate-fadein">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                consulta.status === "pendente" 
+                  ? "bg-yellow-100 text-yellow-800" 
+                  : consulta.status === "concluida"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+              }`}>
+                {consulta.status === "pendente" ? "Pendente" : 
+                 consulta.status === "concluida" ? "Concluída" : "Cancelada"}
+              </span>
+              
+              {consulta.nivelUrgencia && (
+                <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                  Urgência: {consulta.nivelUrgencia}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {consulta.triagem && (
+            <div className="mt-3">
+              <h4 className="font-medium text-gray-700 mb-1">Detalhes da Triagem:</h4>
+              <div className="text-sm text-gray-600">
+                {perguntasTriagem.map(p => {
+                  if (consulta.triagem?.[p.id]) {
+                    return (
+                      <div key={p.id} className="flex mt-1">
+                        <span className="font-medium w-32 flex-shrink-0">{p.texto}:</span>
+                        <span>{consulta.triagem[p.id]}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente principal
 export default function ConsultasPaciente() {
+  // Estados
   const [especialidade, setEspecialidade] = useState("");
   const [data, setData] = useState("");
   const [showTriagem, setShowTriagem] = useState(false);
-  const [respostas, setRespostas] = useState<{ [key: number]: string }>({});
+  const [respostas, setRespostas] = useState({});
   const [agendado, setAgendado] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,53 +940,132 @@ export default function ConsultasPaciente() {
   const [filtroEsp, setFiltroEsp] = useState("");
   const [filtroData, setFiltroData] = useState("");
 
+  // Estados para mapa e unidades
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [unidadesFiltradas, setUnidadesFiltradas] = useState<HospitalUnit[]>([]);
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([-8.8383, 13.2344]); // Centro em Luanda
+  const [mapZoom, setMapZoom] = useState(12);
+  const [etapaAgendamento, setEtapaAgendamento] = useState(1);
+
+  // Obter consultas e localização ao carregar
   useEffect(() => {
     setConsultas(getConsultas());
+    obterLocalizacaoUsuario();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Obter localização do usuário
+  const obterLocalizacaoUsuario = useCallback(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation([latitude, longitude]);
+          setMapCenter([latitude, longitude]);
+          setMapZoom(14);
+        },
+        (error) => {
+          console.error("Erro ao obter localização:", error);
+        }
+      );
+    } else {
+      console.log("Geolocalização não suportada pelo navegador");
+    }
+  }, []);
+
+  // Atualizar unidades filtradas quando especialidade mudar
+  useEffect(() => {
+    if (especialidade && userLocation) {
+      const unidadesComEspecialidade = unidadesHospitalares.filter(unidade =>
+        unidade.especialidades.some(esp =>
+          esp.toLowerCase().includes(especialidade.toLowerCase())
+        )
+      );
+
+      const unidadesComDistancia = unidadesComEspecialidade.map(unidade => ({
+        ...unidade,
+        distancia: calcularDistancia(
+          userLocation[0],
+          userLocation[1],
+          unidade.lat,
+          unidade.lng
+        )
+      })).sort((a, b) => (a.distancia || Infinity) - (b.distancia || Infinity));
+
+      setUnidadesFiltradas(unidadesComDistancia);
+    } else {
+      setUnidadesFiltradas([]);
+    }
+  }, [especialidade, userLocation]);
+
+  // Atualizar mapa quando unidade for selecionada
+  useEffect(() => {
+    if (unidadeSelecionada) {
+      const unidade = unidadesHospitalares.find(u => u.id === unidadeSelecionada);
+      if (unidade) {
+        setMapCenter([unidade.lat, unidade.lng]);
+        setMapZoom(16);
+      }
+    }
+  }, [unidadeSelecionada]);
+
+  // Manipuladores de eventos
+  const handleSubmitAgendamento = (e) => {
     e.preventDefault();
     setErro("");
-    if (!especialidade || !data) {
+
+    if (!especialidade || !data || !unidadeSelecionada) {
       setErro("Preencha todos os campos.");
       return;
     }
+
     setShowTriagem(true);
   };
 
-  const handleTriagemChange = (id: number, valor: string) => {
-    setRespostas((prev) => ({ ...prev, [id]: valor }));
+  const handleSelecionarUnidade = (id) => {
+    setUnidadeSelecionada(id);
   };
 
-  const handleTriagemSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTriagemCompleta = (respostas, urgencia) => {
     setLoading(true);
+
     setTimeout(() => {
-      setShowTriagem(false);
-      const novaConsulta: Consulta = {
+      const unidade = unidadesHospitalares.find(u => u.id === unidadeSelecionada);
+      
+      const novaConsulta = {
         id: Date.now().toString(),
         especialidade,
         data,
         status: "pendente",
         triagem: respostas,
+        unidadeId: unidadeSelecionada,
+        unidadeNome: unidade?.nome || "",
+        nivelUrgencia: urgencia.nivel
       };
+
       const novasConsultas = [novaConsulta, ...consultas];
       setConsultas(novasConsultas);
       saveConsultas(novasConsultas);
+
+      // Resetar estados
       setAgendado(true);
       setEspecialidade("");
       setData("");
       setRespostas({});
+      setUnidadeSelecionada(null);
+      setEtapaAgendamento(1);
+      setShowTriagem(false);
       setLoading(false);
-      setTimeout(() => setAgendado(false), 2000);
-    }, 1200);
+
+      setTimeout(() => setAgendado(false), 3000);
+    }, 1500);
   };
 
-  const handleCancelar = (id: string) => {
+  const handleCancelarConsulta = (id) => {
     setLoading(true);
     setTimeout(() => {
       const novas = consultas.map(c =>
-        c.id === id ? { ...c, status: "cancelada" as const } : c
+        c.id === id ? { ...c, status: "cancelada" } : c
       );
       setConsultas(novas);
       saveConsultas(novas);
@@ -96,143 +1073,221 @@ export default function ConsultasPaciente() {
     }, 1000);
   };
 
-  // Filtros
-  const pendentes = consultas.filter(c => c.status === "pendente").filter(c =>
-    (!filtroEsp || c.especialidade === filtroEsp) && (!filtroData || c.data === filtroData)
-  );
-  const historico = consultas.filter(c => c.status !== "pendente").filter(c =>
-    (!filtroEsp || c.especialidade === filtroEsp) && (!filtroData || c.data === filtroData)
-  );
-  const especialidades = Array.from(new Set(consultas.map(c => c.especialidade)));
+  const handleVoltarEtapa = () => {
+    setEtapaAgendamento(prev => Math.max(1, prev - 1));
+  };
+
+  const handleContinuarEtapa = () => {
+    setEtapaAgendamento(prev => Math.min(3, prev + 1));
+  };
+
+  // Filtrar consultas
+  const pendentes = consultas
+    .filter(c => c.status === "pendente")
+    .filter(c => 
+      (!filtroEsp || c.especialidade.includes(filtroEsp)) && 
+      (!filtroData || c.data === filtroData)
+    );
+
+  const historico = consultas
+    .filter(c => c.status !== "pendente")
+    .filter(c => 
+      (!filtroEsp || c.especialidade.includes(filtroEsp)) && 
+      (!filtroData || c.data === filtroData)
+    );
+
+  const especialidadesDisponiveis = Array.from(new Set(consultas.map(c => c.especialidade)));
+  const unidadeSelecionadaObj = unidadesHospitalares.find(u => u.id === unidadeSelecionada);
 
   return (
-    <div className="flex-1 w-full flex flex-col min-h-full p-4">
-      <h2 className="text-2xl font-bold text-moyo-primary mb-4 flex items-center gap-2">
-        <i className="fas fa-calendar-check"></i> Consultas
-      </h2>
+    <div className="min-h-full w-full overflow-y-auto flex-col bg-gradient-to-br from-moyo-primary/10 to-moyo-secondary/10 animate-fadein">
+      {/* Header */}
+      <header className="w-full py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between bg-moyo-primary text-white shadow-lg animate-slidein">
+        <h2 className="text-2xl md:text-3xl font-extrabold flex items-center gap-3">
+          <i className="fas fa-calendar-check animate-bounce"></i> Consultas
+        </h2>
+        <span className="text-base md:text-lg font-semibold mt-2 md:mt-0 animate-fadein">
+          Agendamento Inteligente
+        </span>
+      </header>
+
       {/* Filtros */}
-      <div className="flex flex-wrap gap-4 mb-4">
-        <select className="border rounded-lg px-3 py-2" value={filtroEsp} onChange={e => setFiltroEsp(e.target.value)}>
+      <div className="flex flex-wrap gap-3 mb-6 px-4 md:px-8 pt-6 animate-fadein">
+        <select 
+          className="border rounded-lg px-3 py-2 shadow focus:ring focus:ring-moyo-primary flex-grow min-w-[180px]"
+          value={filtroEsp} 
+          onChange={e => setFiltroEsp(e.target.value)}
+        >
           <option value="">Todas Especialidades</option>
-          {especialidades.map(esp => <option key={esp}>{esp}</option>)}
+          {especialidadesDisponiveis.map(esp => 
+            <option key={esp} value={esp}>{esp}</option>
+          )}
         </select>
-        <input type="date" className="border rounded-lg px-3 py-2" value={filtroData} onChange={e => setFiltroData(e.target.value)} />
-        <button className="px-4 py-2 rounded bg-gray-200" onClick={() => { setFiltroEsp(""); setFiltroData(""); }}>Limpar Filtros</button>
+        
+        <input 
+          type="date" 
+          className="border rounded-lg px-3 py-2 shadow focus:ring focus:ring-moyo-primary flex-grow min-w-[180px]"
+          value={filtroData} 
+          onChange={e => setFiltroData(e.target.value)} 
+        />
+        
+        <button 
+          className="px-4 py-2 rounded bg-moyo-secondary text-white font-bold shadow hover:bg-moyo-primary transition flex items-center"
+          onClick={() => { setFiltroEsp(""); setFiltroData(""); }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Limpar
+        </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-        <div className="bg-white rounded-xl shadow p-6 mb-6 w-full">
-          <h3 className="text-lg font-semibold mb-2">Agendar Nova Consulta</h3>
-          {erro && <div className="text-red-500 text-sm mb-2">{erro}</div>}
-          {agendado && <div className="text-green-600 font-bold mb-2">Consulta agendada com sucesso!</div>}
-          {loading && <div className="text-moyo-primary font-semibold mb-2 animate-pulse">Processando...</div>}
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="block font-medium mb-1">Especialidade</label>
-              <select className="w-full border rounded-lg px-3 py-2" value={especialidade} onChange={e => setEspecialidade(e.target.value)} required>
-                <option value="">Selecione</option>
-                <option>Cardiologia</option>
-                <option>Pediatria</option>
-                <option>Clínica Geral</option>
-                <option>Ortopedia</option>
-                <option>Outra</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Data</label>
-              <input type="date" className="w-full border rounded-lg px-3 py-2" value={data} onChange={e => setData(e.target.value)} required />
-            </div>
-            <div className="md:col-span-2">
-              <button type="submit" className="bg-moyo-primary text-white px-6 py-2 rounded-lg font-bold mt-2 hover:bg-moyo-secondary transition" disabled={loading}>Agendar</button>
-            </div>
-          </form>
-        </div>
-        <div className="bg-white rounded-xl shadow p-6 w-full">
-          <h3 className="text-lg font-semibold mb-2">Consultas Pendentes</h3>
-          {pendentes.length === 0 ? (
-            <div className="text-moyo-gray">Nenhuma consulta pendente.</div>
-          ) : (
-            <ul className="space-y-3">
-              {pendentes.map(c => (
-                <li key={c.id} className="flex items-center justify-between bg-moyo-primary/5 rounded-lg px-3 py-2">
-                  <div>
-                    <span className="font-semibold">{c.especialidade}</span> <span className="text-sm text-moyo-gray">({c.data})</span>
+
+      {/* Conteúdo Principal */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 md:px-8 pb-8">
+        {/* Painel Esquerdo (Agendamento) */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 animate-popin">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-moyo-primary">Agendar Nova Consulta</h3>
+            <div className="flex items-center">
+              {[1, 2, 3].map(etapa => (
+                <React.Fragment key={etapa}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    etapaAgendamento === etapa 
+                      ? 'bg-moyo-primary text-white' 
+                      : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    {etapa}
                   </div>
-                  <button onClick={() => handleCancelar(c.id)} className="text-red-500 hover:underline text-sm" disabled={loading}>Cancelar</button>
-                </li>
+                  {etapa < 3 && (
+                    <div className={`w-8 h-1 mx-[-2px] ${
+                      etapaAgendamento > etapa ? 'bg-moyo-primary' : 'bg-gray-200'
+                    }`}></div>
+                  )}
+                </React.Fragment>
               ))}
-            </ul>
+            </div>
+          </div>
+          
+          <FormularioAgendamento
+            etapa={etapaAgendamento}
+            especialidade={especialidade}
+            setEspecialidade={setEspecialidade}
+            data={data}
+            setData={setData}
+            unidadeSelecionada={unidadeSelecionada}
+            setUnidadeSelecionada={setUnidadeSelecionada}
+            unidadesFiltradas={unidadesFiltradas}
+            unidadesHospitalares={unidadesHospitalares}
+            onVoltar={handleVoltarEtapa}
+            onContinuar={handleContinuarEtapa}
+            onSubmit={handleSubmitAgendamento}
+            loading={loading}
+            erro={erro}
+            userLocation={userLocation}
+          />
+        </div>
+
+        {/* Painel Direito (Mapa) */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 animate-popin">
+          <h3 className="text-xl font-bold text-moyo-primary mb-6">Localização das Unidades</h3>
+          <MapaHospital
+            mapCenter={mapCenter}
+            mapZoom={mapZoom}
+            userLocation={userLocation}
+            unidadesFiltradas={unidadesFiltradas}
+            onSelectUnidade={handleSelecionarUnidade}
+            unidadeSelecionada={unidadeSelecionada}
+          />
+          
+          {unidadeSelecionadaObj && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200 animate-fadein">
+              <div className="font-bold text-blue-800">{unidadeSelecionadaObj.nome}</div>
+              <div className="text-sm text-blue-700 mt-1">{unidadeSelecionadaObj.endereco}</div>
+              <div className="mt-3">
+                <div className="font-medium text-blue-800">Especialidades disponíveis:</div>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {unidadeSelecionadaObj.especialidades.map(esp => (
+                    <span key={esp} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      {esp}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
         </div>
-        {/* Card extra para ocupar o grid */}
-        <div className="bg-transparent shadow-none p-6 w-full"></div>
       </div>
-      {/* Histórico de Consultas */}
-      <div className="bg-white rounded-xl shadow p-6 w-full mt-6">
-        <h3 className="text-lg font-semibold mb-2">Histórico de Consultas</h3>
-        {historico.length === 0 ? (
-          <div className="text-moyo-gray">Nenhum histórico disponível.</div>
-        ) : (
-          <ul className="space-y-3">
-            {historico.map(c => (
-              <li key={c.id} className="flex flex-col md:flex-row md:items-center justify-between bg-gray-100 rounded-lg px-3 py-2">
-                <div>
-                  <span className="font-semibold">{c.especialidade}</span> <span className="text-sm text-moyo-gray">({c.data})</span>
-                  <span className={`ml-2 text-xs px-2 py-1 rounded ${c.status === "cancelada" ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
-                    {c.status === "cancelada" ? "Cancelada" : "Concluída"}
-                  </span>
-                  {c.triagem && (
-                    <div className="mt-1 text-xs text-moyo-gray">
-                      <div><b>Urgência:</b> {c.triagem[4]}</div>
-                      <div><b>Sintomas:</b> {c.triagem[5]}</div>
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {/* Modal de Triagem Digital */}
-      {showTriagem && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4 text-moyo-primary">Triagem Digital</h3>
-            {loading && <div className="text-moyo-primary font-semibold mb-2 animate-pulse">Processando...</div>}
-            <form onSubmit={handleTriagemSubmit} className="space-y-4">
-              {perguntasTriagem.map((p) => (
-                <div key={p.id}>
-                  <label className="block font-medium mb-2">{p.texto}</label>
-                  {p.tipo === "select" && (
-                    <select
-                      className="w-full border rounded-lg px-3 py-2"
-                      name={`pergunta-${p.id}`}
-                      value={respostas[p.id] || ""}
-                      onChange={e => handleTriagemChange(p.id, e.target.value)}
-                      required
-                    >
-                      <option value="">Selecione</option>
-                      {p.opcoes!.map(op => <option key={op}>{op}</option>)}
-                    </select>
-                  )}
-                  {p.tipo === "textarea" && (
-                    <textarea
-                      className="w-full border rounded-lg px-3 py-2"
-                      name={`pergunta-${p.id}`}
-                      value={respostas[p.id] || ""}
-                      onChange={e => handleTriagemChange(p.id, e.target.value)}
-                      rows={3}
-                      placeholder="Descreva seus sintomas aqui..."
-                      required
-                    />
-                  )}
-                </div>
+
+      {/* Consultas Pendentes */}
+      <div className="px-4 md:px-8 pb-8">
+        <div className="bg-white rounded-2xl shadow-xl p-6 animate-popin">
+          <h3 className="text-xl font-bold text-moyo-primary mb-6">Consultas Pendentes</h3>
+          
+          {pendentes.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 animate-fadein">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Nenhuma consulta pendente
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadein">
+              {pendentes.map(consulta => (
+                <ConsultaCard 
+                  key={consulta.id} 
+                  consulta={consulta} 
+                  onCancel={handleCancelarConsulta}
+                  loading={loading}
+                />
               ))}
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setShowTriagem(false)} className="px-4 py-2 rounded bg-gray-200" disabled={loading}>Cancelar</button>
-                <button type="submit" className="bg-moyo-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-moyo-secondary transition" disabled={loading}>Finalizar Triagem</button>
-              </div>
-            </form>
-          </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Histórico de Consultas */}
+      <div className="px-4 md:px-8 pb-8">
+        <div className="bg-white rounded-2xl shadow-xl p-6 animate-popin">
+          <h3 className="text-xl font-bold text-moyo-primary mb-6">Histórico de Consultas</h3>
+          
+          {historico.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 animate-fadein">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Nenhum histórico de consultas
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 animate-fadein">
+              {historico.map(consulta => (
+                <ConsultaCard 
+                  key={consulta.id} 
+                  consulta={consulta} 
+                  onCancel={handleCancelarConsulta}
+                  loading={loading}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal de Triagem */}
+      <TriagemModal
+        show={showTriagem}
+        onClose={() => setShowTriagem(false)}
+        onComplete={handleTriagemCompleta}
+        unidadeNome={unidadeSelecionadaObj?.nome || ""}
+        loading={loading}
+      />
+
+      {/* Notificação de Agendamento */}
+      {agendado && (
+        <div className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-4 rounded-xl shadow-xl flex items-center animate-fadein z-50">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Consulta agendada com sucesso!</span>
         </div>
       )}
     </div>

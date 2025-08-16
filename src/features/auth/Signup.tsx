@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 export default function Signup() {
+  const [fotoPerfil, setFotoPerfil] = useState<string>("");
   const [perfil, setPerfil] = useState<string>("paciente");
   const [nome, setNome] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
@@ -27,15 +27,15 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
     if (!perfil) return setError("Selecione o perfil para cadastro.");
-    if (perfil === "profissional" && (!unidade || !municipio || !area || !cargo)) return setError("Preencha todos os campos do profissional.");
     if (!nome || !dataNascimento || !bi || !morada || !sexo || !email || !contacto || !senha || !confirmarSenha) return setError("Preencha todos os campos obrigatórios.");
     if (senha !== confirmarSenha) return setError("As senhas não coincidem.");
     if (perfil === "paciente" && isMenor && !responsavel) return setError("Informe o contacto do responsável.");
+    if (perfil === "profissional" && (!unidade || !municipio || !area || !cargo)) return setError("Preencha todos os campos do profissional.");
 
     try {
-      const payload = {
+      let url = "http://localhost:4000/pacientes";
+      let body: any = {
         nome,
         email,
         senha,
@@ -43,16 +43,43 @@ export default function Signup() {
         sexo,
         telefone: contacto,
         endereco: morada,
-        bi, // Adicionando BI ao payload
-        perfil, // Adicionando o perfil ao payload
+        foto_perfil: fotoPerfil,
       };
+      if (perfil === "profissional") {
+        url = "http://localhost:4000/profissionais";
+        body = {
+          nome,
+          data_nascimento: dataNascimento,
+          bi,
+          sexo,
+          morada,
+          email,
+          telefone: contacto,
+          unidade,
+          municipio,
+          especialidade: area,
+          cargo,
+          conselho: "", // Adapte se necessário
+          registro_profissional: bi,
+          senha,
+          foto_perfil: fotoPerfil,
+        };
+      }
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 
-      const endpoint = perfil === "profissional" ? "http://localhost:4000/profissionais" : "http://localhost:4000/pacientes";
-      const response = await axios.post(endpoint, payload);
-      alert("Cadastro realizado com sucesso! Bem-vindo, " + response.data.nome);
+      if (!response.ok) {
+        const errorData = await response.json();
+        return setError(errorData.error || "Erro ao cadastrar.");
+      }
+
+      alert("Cadastro realizado com sucesso!");
       navigate("/login");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erro ao realizar cadastro. Tente novamente.");
+    } catch (err) {
+      setError("Erro ao conectar ao servidor.");
     }
   };
 
@@ -84,6 +111,27 @@ export default function Signup() {
               </div>
               {error && <div className="mb-4 text-red-500 text-sm text-center">{error}</div>}
               <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Foto de Perfil */}
+                <div className="form-group md:col-span-2">
+                  <label className="font-medium mb-1 block">Foto de Perfil</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setFotoPerfil(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  {fotoPerfil && (
+                    <img src={fotoPerfil} alt="Pré-visualização" className="mt-2 w-20 h-20 rounded-full object-cover border-2 border-moyo-primary" />
+                  )}
+                </div>
                 {/* Dados comuns */}
                 <div className="form-group">
                   <label className="font-medium mb-1 block">Nome Completo <span className="text-red-500">*</span></label>
@@ -114,7 +162,6 @@ export default function Signup() {
                       <option value="">Selecione</option>
                       <option value="Masculino">Masculino</option>
                       <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
                     </select>
                   </div>
                 </div>
