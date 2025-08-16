@@ -1,10 +1,33 @@
-// App.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Unidades hospitalares de Angola (foco em Luanda)
+// Fix para ícones do Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Descrições das especialidades médicas
+const descricoesEspecialidades = {
+  "Cardiologia": "Especialidade médica que trata do coração e do sistema circulatório. Cuida de problemas como hipertensão, insuficiência cardíaca, arritmias e infarto.",
+  "Pediatria": "Especialidade médica dedicada à saúde de crianças e adolescentes. Aborda desde cuidados neonatais até doenças infantis e acompanhamento do desenvolvimento.",
+  "Clínica Geral": "Atendimento médico geral para diagnóstico e tratamento de diversas condições de saúde. É a porta de entrada para o sistema de saúde.",
+  "Ortopedia": "Especialidade médica que trata de problemas relacionados aos ossos, músculos, ligamentos e articulações. Cuida de fraturas, luxações e doenças como artrite.",
+  "Dermatologia": "Especialidade médica que trata da pele, cabelos e unhas. Diagnostica e trata doenças como acne, psoríase, dermatites e câncer de pele.",
+  "Oftalmologia": "Especialidade médica que trata dos olhos e problemas de visão. Realiza exames de acuidade visual e trata doenças como catarata, glaucoma e retinopatias.",
+  "Ginecologia": "Especialidade médica que trata da saúde da mulher, especialmente do sistema reprodutivo. Realiza exames preventivos e acompanhamento ginecológico.",
+  "Neurologia": "Especialidade médica que trata do sistema nervoso (cérebro, medula, nervos e músculos). Diagnostica e trata doenças como epilepsia, AVC e Alzheimer.",
+  "Endocrinologia": "Especialidade médica que trata de problemas hormonais e metabólicos. Cuida de diabetes, distúrbios da tireoide, obesidade e osteoporose.",
+  "Cirurgia": "Especialidade médica que realiza procedimentos operatórios. Pode ser geral ou especializada em áreas como vascular, plástica ou do aparelho digestivo.",
+  "Neonatologia": "Subespecialidade da pediatria que cuida de recém-nascidos, especialmente prematuros ou com problemas de saúde nos primeiros dias de vida.",
+  "Cardiologia Infantil": "Subespecialidade que trata de problemas cardíacos em crianças, incluindo cardiopatias congênitas e adquiridas."
+};
+
+// Unidades hospitalares
 const unidadesHospitalares = [
   {
     id: "1",
@@ -102,7 +125,7 @@ interface Consulta {
   especialidade: string;
   data: string;
   status: "pendente" | "concluida" | "cancelada";
-  triagem?: { [key: number]: string };
+  triagem?: { [key: string]: string | string[] };
   unidadeId?: string;
   unidadeNome?: string;
   nivelUrgencia?: string;
@@ -120,16 +143,16 @@ interface HospitalUnit {
   datasDisponiveis: string[];
 }
 
-// Perguntas de triagem atualizadas
+// Perguntas de triagem
 const perguntasTriagem = [
   { 
-    id: 1, 
+    id: "1", 
     texto: "Descreva seus sintomas principais (incluindo quando começaram e como evoluíram)", 
     tipo: "textarea",
     categoria: "Sintomas Atuais"
   },
   {
-    id: 2,
+    id: "2",
     texto: "Qual a intensidade dos seus sintomas?",
     tipo: "select",
     opcoes: ["Leve (não interfere nas atividades)", "Moderada (dificulta atividades)", "Intensa (impossibilita atividades)", "Insuportável"],
@@ -137,7 +160,7 @@ const perguntasTriagem = [
     peso: [1, 2, 3, 4]
   },
   {
-    id: 3,
+    id: "3",
     texto: "Você tem alguma condição médica pré-existente?",
     tipo: "select",
     opcoes: ["Não", "Hipertensão", "Diabetes", "Problemas cardíacos", "Doença respiratória", "Outra"],
@@ -145,13 +168,13 @@ const perguntasTriagem = [
     peso: [0, 1, 1, 2, 2, 1]
   },
   {
-    id: 4,
+    id: "4",
     texto: "Você faz uso de algum medicamento regularmente? Se sim, quais?",
     tipo: "textarea",
     categoria: "Histórico Médico"
   },
   {
-    id: 5,
+    id: "5",
     texto: "Você já foi hospitalizado nos últimos 3 meses?",
     tipo: "select",
     opcoes: ["Não", "Sim, por doença", "Sim, por cirurgia", "Sim, por acidente"],
@@ -159,7 +182,7 @@ const perguntasTriagem = [
     peso: [0, 2, 1, 2]
   },
   {
-    id: 6,
+    id: "6",
     texto: "Você possui algum dos seguintes sintomas? (marque todos que se aplicam)",
     tipo: "multiselect",
     opcoes: ["Febre acima de 38°C", "Dificuldade para respirar", "Dor no peito", "Sangramento intenso", "Tontura ou desmaio", "Vômitos persistentes", "Nenhum destes"],
@@ -167,13 +190,13 @@ const perguntasTriagem = [
     peso: [3, 4, 4, 3, 2, 2, 0]
   },
   {
-    id: 7,
+    id: "7",
     texto: "Descreva como os sintomas estão afetando sua rotina diária",
     tipo: "textarea",
     categoria: "Impacto na Vida"
   },
   {
-    id: 8,
+    id: "8",
     texto: "Há algo mais que gostaria de informar ao profissional de saúde?",
     tipo: "textarea",
     categoria: "Informações Adicionais"
@@ -193,7 +216,7 @@ function saveConsultas(consultas: Consulta[]) {
   localStorage.setItem("moyo-consultas", JSON.stringify(consultas));
 }
 
-// Função para calcular distância entre coordenadas
+// Função para calcular distância
 function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // Raio da Terra em km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -206,25 +229,34 @@ function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c; // Distância em km
 }
 
-// Função para calcular urgência com base nas respostas
-function calcularUrgencia(respostas) {
+// Função para calcular urgência
+function calcularUrgencia(respostas: { [key: string]: string | string[] }): { nivel: string, cor: string } {
   let pontuacao = 0;
   
   // Calcular pontuação com base nas respostas
   perguntasTriagem.forEach(pergunta => {
     if (pergunta.peso && respostas[pergunta.id]) {
-      if (pergunta.tipo === "select" || pergunta.tipo === "multiselect") {
-        const opcaoIndex = pergunta.opcoes.indexOf(respostas[pergunta.id]);
-        if (opcaoIndex !== -1 && pergunta.peso[opcaoIndex]) {
+      if (pergunta.tipo === "select") {
+        const resposta = respostas[pergunta.id] as string;
+        const opcaoIndex = pergunta.opcoes.indexOf(resposta);
+        if (opcaoIndex !== -1 && pergunta.peso[opcaoIndex] !== undefined) {
           pontuacao += pergunta.peso[opcaoIndex];
         }
+      } else if (pergunta.tipo === "multiselect") {
+        const respostasMulti = respostas[pergunta.id] as string[];
+        respostasMulti.forEach(resp => {
+          const opcaoIndex = pergunta.opcoes.indexOf(resp);
+          if (opcaoIndex !== -1 && pergunta.peso[opcaoIndex] !== undefined) {
+            pontuacao += pergunta.peso[opcaoIndex];
+          }
+        });
       }
     }
   });
   
   // Análise de texto nas respostas abertas
-  if (respostas[1]) {
-    const sintomas = respostas[1].toLowerCase();
+  if (respostas["1"]) {
+    const sintomas = (respostas["1"] as string).toLowerCase();
     
     // Palavras-chave que aumentam a urgência
     const palavrasUrgentes = ["forte", "insuportável", "intensa", "grave", "sangue", "vômito", "desmaio", "tontura", "falta de ar", "dor no peito"];
@@ -233,15 +265,15 @@ function calcularUrgencia(respostas) {
     });
   }
   
-  if (respostas[4]) {
-    const medicamentos = respostas[4].toLowerCase();
+  if (respostas["4"]) {
+    const medicamentos = (respostas["4"] as string).toLowerCase();
     if (medicamentos.includes("anticoagulante") || medicamentos.includes("insulina")) {
       pontuacao += 2;
     }
   }
   
-  if (respostas[7]) {
-    const impacto = respostas[7].toLowerCase();
+  if (respostas["7"]) {
+    const impacto = (respostas["7"] as string).toLowerCase();
     if (impacto.includes("não consigo trabalhar") || impacto.includes("não consigo levantar")) {
       pontuacao += 3;
     }
@@ -280,7 +312,7 @@ const MapaHospital = ({
         />
         {userLocation && (
           <Marker position={userLocation} icon={userIcon}>
-            <Popup className="font-bold">Sua localização atual</Popup>
+            <Popup className="font-bold">Sua localização</Popup>
           </Marker>
         )}
         {unidadesFiltradas.map(unidade => (
@@ -315,7 +347,7 @@ const MapaHospital = ({
                 {unidade.distancia && (
                   <div className="mt-2 text-sm font-medium">
                     <i className="fas fa-location-dot text-blue-500 mr-1"></i>
-                    {unidade.distancia.toFixed(1)} km de distância
+                    {unidade.distancia.toFixed(1)} km
                   </div>
                 )}
               </div>
@@ -345,6 +377,11 @@ const FormularioAgendamento = ({
   erro,
   userLocation
 }) => {
+  const [hoveredEspecialidade, setHoveredEspecialidade] = useState(null);
+  const [showDescription, setShowDescription] = useState(false);
+  const [showModalDescricao, setShowModalDescricao] = useState(false);
+  const [selectedEspecialidade, setSelectedEspecialidade] = useState(null);
+  
   const especialidadesDisponiveis = useMemo(() => {
     const todas = unidadesHospitalares.flatMap(u => u.especialidades);
     return Array.from(new Set(todas));
@@ -352,7 +389,6 @@ const FormularioAgendamento = ({
 
   const unidadesComEspecialidade = useMemo(() => {
     if (!especialidade) return [];
-    
     return unidadesHospitalares.filter(unidade =>
       unidade.especialidades.some(esp =>
         esp.toLowerCase().includes(especialidade.toLowerCase())
@@ -362,7 +398,6 @@ const FormularioAgendamento = ({
 
   const unidadesComDistancia = useMemo(() => {
     if (!userLocation) return unidadesComEspecialidade;
-    
     return unidadesComEspecialidade.map(unidade => ({
       ...unidade,
       distancia: calcularDistancia(
@@ -380,29 +415,98 @@ const FormularioAgendamento = ({
     return unidade ? unidade.datasDisponiveis : [];
   }, [unidadeSelecionada, unidadesHospitalares]);
 
+  // Abrir modal de descrição em dispositivos móveis
+  const handleOpenModal = (esp) => {
+    setSelectedEspecialidade(esp);
+    setShowModalDescricao(true);
+  };
+
   return (
     <div className="space-y-6">
       {etapa === 1 && (
         <div className="space-y-4 animate-fadein">
-          <div className="flex justify-between items-center">
-            <h4 className="font-bold text-lg text-gray-700">Selecione a especialidade médica</h4>
-          </div>
+          <h4 className="font-bold text-lg text-gray-700">Selecione a especialidade</h4>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {especialidadesDisponiveis.slice(0, 8).map(esp => (
-              <button
+              <div 
                 key={esp}
-                type="button"
-                className={`px-3 py-2 rounded-lg font-medium text-sm shadow transition-all duration-300 flex items-center justify-center
-                  ${especialidade === esp 
-                    ? 'bg-moyo-primary text-white scale-105' 
-                    : 'bg-white hover:bg-moyo-primary/10 text-gray-700 border border-gray-200'}`}
-                onClick={() => setEspecialidade(esp)}
+                className="relative"
+                onMouseEnter={() => {
+                  setHoveredEspecialidade(esp);
+                  setShowDescription(true);
+                }}
+                onMouseLeave={() => setShowDescription(false)}
               >
-                {esp}
-              </button>
+                <button
+                  type="button"
+                  className={`w-full px-3 py-2 rounded-lg font-medium text-sm shadow transition-all duration-300 flex items-center justify-center
+                    ${especialidade === esp 
+                      ? 'bg-moyo-primary text-white scale-105' 
+                      : 'bg-white hover:bg-moyo-primary/10 text-gray-700 border border-gray-200'}`}
+                  onClick={() => setEspecialidade(esp)}
+                  onTouchStart={() => handleOpenModal(esp)}
+                >
+                  {esp}
+                </button>
+                
+                {/* Tooltip de descrição para desktop */}
+                {hoveredEspecialidade === esp && showDescription && (
+                  <div className="hidden md:block absolute z-10 w-64 p-3 bg-white border border-gray-200 rounded-lg shadow-lg animate-fadein"
+                    style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '10px' }}>
+                    <div className="text-sm text-gray-700 font-medium mb-1">{esp}</div>
+                    <div className="text-xs text-gray-600">
+                      {descricoesEspecialidades[esp] || "Descrição não disponível."}
+                    </div>
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-0 h-0 
+                      border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"></div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
+          
+          {/* Área fixa de descrição para mobile */}
+          <div className="md:hidden mt-4 min-h-[80px] p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-600">
+            {hoveredEspecialidade ? (
+              <>
+                <div className="font-medium text-moyo-primary">{hoveredEspecialidade}</div>
+                <div>{descricoesEspecialidades[hoveredEspecialidade] || "Descrição não disponível."}</div>
+              </>
+            ) : (
+              "Toque em uma especialidade para ver sua descrição"
+            )}
+          </div>
+          
+          {/* Modal de descrição para mobile */}
+          {showModalDescricao && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 md:hidden">
+              <div className="bg-white rounded-lg p-6 w-11/12 max-w-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold">{selectedEspecialidade}</h3>
+                  <button onClick={() => setShowModalDescricao(false)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-gray-600">
+                  {descricoesEspecialidades[selectedEspecialidade] || "Descrição não disponível."}
+                </p>
+                <div className="mt-6">
+                  <button
+                    onClick={() => {
+                      setEspecialidade(selectedEspecialidade);
+                      setShowModalDescricao(false);
+                    }}
+                    className="w-full bg-moyo-primary text-white py-2 rounded-lg font-bold"
+                  >
+                    Selecionar esta especialidade
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="mt-6">
             <button
@@ -533,9 +637,9 @@ const FormularioAgendamento = ({
             <button
               onClick={onSubmit}
               className="bg-moyo-primary text-white px-6 py-2 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition transform hover:scale-105 disabled:opacity-50"
-              disabled={!data}
+              disabled={!data || loading}
             >
-              Finalizar Agendamento
+              {loading ? 'Aguarde...' : 'Finalizar Agendamento'}
             </button>
           </div>
         </div>
@@ -562,12 +666,8 @@ const TriagemModal = ({
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Calcular urgência antes de completar
     const nivelUrgencia = calcularUrgencia(respostas);
     setUrgencia(nivelUrgencia);
-    
-    // Passar as respostas e a urgência calculada
     onComplete(respostas, nivelUrgencia);
   };
   
@@ -639,7 +739,9 @@ const TriagemModal = ({
               {perguntasTriagem[etapaTriagem].tipo === "multiselect" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {perguntasTriagem[etapaTriagem].opcoes.map((opcao, index) => {
-                    const selecionado = respostas[perguntasTriagem[etapaTriagem].id]?.includes(opcao);
+                    const respostaAtual = respostas[perguntasTriagem[etapaTriagem].id];
+                    const selecionado = Array.isArray(respostaAtual) && respostaAtual.includes(opcao);
+                    
                     return (
                       <button
                         key={index}
@@ -650,7 +752,7 @@ const TriagemModal = ({
                             : 'border-gray-200 hover:border-moyo-primary'
                         }`}
                         onClick={() => {
-                          const respostasAtuais = respostas[perguntasTriagem[etapaTriagem].id] || [];
+                          const respostasAtuais = Array.isArray(respostaAtual) ? respostaAtual : [];
                           let novasRespostas = [...respostasAtuais];
                           
                           if (selecionado) {
@@ -659,7 +761,6 @@ const TriagemModal = ({
                             if (opcao === "Nenhum destes") {
                               novasRespostas = [opcao];
                             } else {
-                              // Remover "Nenhum destes" se estiver selecionado
                               novasRespostas = novasRespostas.filter(r => r !== "Nenhum destes");
                               novasRespostas.push(opcao);
                             }
@@ -690,7 +791,6 @@ const TriagemModal = ({
                   value={respostas[perguntasTriagem[etapaTriagem].id] || ""}
                   onChange={e => handleChange(perguntasTriagem[etapaTriagem].id, e.target.value)}
                   placeholder="Por favor, descreva em detalhes..."
-                  required
                 />
               )}
               
@@ -713,6 +813,7 @@ const TriagemModal = ({
                     }
                   }}
                   className="bg-moyo-primary text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition ml-auto"
+                  disabled={loading}
                 >
                   {etapaTriagem === perguntasTriagem.length - 1 ? 'Finalizar Triagem' : 'Próxima'}
                 </button>
@@ -881,25 +982,23 @@ const ConsultaCard = ({ consulta, onCancel, loading }) => {
       
       {expanded && (
         <div className="mt-4 pt-4 border-t border-gray-100 animate-fadein">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center">
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                consulta.status === "pendente" 
-                  ? "bg-yellow-100 text-yellow-800" 
-                  : consulta.status === "concluida"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-              }`}>
-                {consulta.status === "pendente" ? "Pendente" : 
-                 consulta.status === "concluida" ? "Concluída" : "Cancelada"}
+          <div className="flex items-center mb-2">
+            <span className={`px-2 py-1 rounded text-xs font-medium ${
+              consulta.status === "pendente" 
+                ? "bg-yellow-100 text-yellow-800" 
+                : consulta.status === "concluida"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+            }`}>
+              {consulta.status === "pendente" ? "Pendente" : 
+               consulta.status === "concluida" ? "Concluída" : "Cancelada"}
+            </span>
+            
+            {consulta.nivelUrgencia && (
+              <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                Urgência: {consulta.nivelUrgencia}
               </span>
-              
-              {consulta.nivelUrgencia && (
-                <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                  Urgência: {consulta.nivelUrgencia}
-                </span>
-              )}
-            </div>
+            )}
           </div>
           
           {consulta.triagem && (
@@ -911,7 +1010,11 @@ const ConsultaCard = ({ consulta, onCancel, loading }) => {
                     return (
                       <div key={p.id} className="flex mt-1">
                         <span className="font-medium w-32 flex-shrink-0">{p.texto}:</span>
-                        <span>{consulta.triagem[p.id]}</span>
+                        <span>
+                          {Array.isArray(consulta.triagem[p.id]) 
+                            ? (consulta.triagem[p.id]).join(", ")
+                            : consulta.triagem[p.id]}
+                        </span>
                       </div>
                     );
                   }
@@ -932,19 +1035,16 @@ export default function ConsultasPaciente() {
   const [especialidade, setEspecialidade] = useState("");
   const [data, setData] = useState("");
   const [showTriagem, setShowTriagem] = useState(false);
-  const [respostas, setRespostas] = useState({});
   const [agendado, setAgendado] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [consultas, setConsultas] = useState<Consulta[]>([]);
+  const [consultas, setConsultas] = useState([]);
   const [filtroEsp, setFiltroEsp] = useState("");
   const [filtroData, setFiltroData] = useState("");
-
-  // Estados para mapa e unidades
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [unidadesFiltradas, setUnidadesFiltradas] = useState<HospitalUnit[]>([]);
-  const [unidadeSelecionada, setUnidadeSelecionada] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([-8.8383, 13.2344]); // Centro em Luanda
+  const [userLocation, setUserLocation] = useState(null);
+  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]);
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState(null);
+  const [mapCenter, setMapCenter] = useState([-8.8383, 13.2344]);
   const [mapZoom, setMapZoom] = useState(12);
   const [etapaAgendamento, setEtapaAgendamento] = useState(1);
 
@@ -1051,7 +1151,6 @@ export default function ConsultasPaciente() {
       setAgendado(true);
       setEspecialidade("");
       setData("");
-      setRespostas({});
       setUnidadeSelecionada(null);
       setEtapaAgendamento(1);
       setShowTriagem(false);
@@ -1077,8 +1176,8 @@ export default function ConsultasPaciente() {
     setEtapaAgendamento(prev => Math.max(1, prev - 1));
   };
 
-  const handleContinuarEtapa = () => {
-    setEtapaAgendamento(prev => Math.min(3, prev + 1));
+  const handleContinuarEtapa = (etapa) => {
+    setEtapaAgendamento(etapa);
   };
 
   // Filtrar consultas
@@ -1104,7 +1203,10 @@ export default function ConsultasPaciente() {
       {/* Header */}
       <header className="w-full py-6 px-4 md:px-8 flex flex-col md:flex-row items-center justify-between bg-moyo-primary text-white shadow-lg animate-slidein">
         <h2 className="text-2xl md:text-3xl font-extrabold flex items-center gap-3">
-          <i className="fas fa-calendar-check animate-bounce"></i> Consultas
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Consultas
         </h2>
         <span className="text-base md:text-lg font-semibold mt-2 md:mt-0 animate-fadein">
           Agendamento Inteligente
