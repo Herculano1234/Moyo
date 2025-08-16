@@ -1,26 +1,4 @@
-// Listar hospitais
-app.get("/hospitais", async (req, res) => {
-  try {
-    const { rows } = await pool.query("SELECT * FROM hospitais");
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar hospitais" });
-  }
-});
 
-// Listar profissionais com hospital vinculado
-app.get("/profissionais-com-hospital", async (req, res) => {
-  try {
-    const { rows } = await pool.query(`
-      SELECT p.*, h.nome as hospital_nome, h.id as hospital_id
-      FROM profissionais p
-      LEFT JOIN hospitais h ON p.hospital_id = h.id
-    `);
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar profissionais" });
-  }
-});
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -55,6 +33,30 @@ async function initializeDatabase(pool) {
 
 // Executar a inicialização do banco de dados
 initializeDatabase(pool);
+
+// Listar hospitais
+app.get("/hospitais", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM hospitais");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar hospitais" });
+  }
+});
+
+// Listar profissionais com hospital vinculado
+app.get("/profissionais-com-hospital", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT p.*, h.nome as hospital_nome, h.id as hospital_id
+      FROM profissionais p
+      LEFT JOIN hospitais h ON p.hospital_id = h.id
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar profissionais" });
+  }
+});
 
 app.get("/", (req, res) => {
   res.send("API Moyo rodando!");

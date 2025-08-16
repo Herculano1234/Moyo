@@ -96,10 +96,11 @@ export default function Login() {
       }
     }, 1000);
     let url = "";
+    const apiHost = window.location.hostname;
     if (perfil === "paciente") {
-      url = "http://localhost:4000/login";
+      url = `http://${apiHost}:4000/login`;
     } else if (perfil === "profissional") {
-      url = "http://localhost:4000/login-profissional";
+      url = `http://${apiHost}:4000/login-profissional`;
     }
     fetch(url, {
       method: "POST",

@@ -64,36 +64,60 @@ const AdminDashboard = () => {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
-        <div className="flex items-center justify-center h-20 border-b border-blue-300">
+        <div className="flex items-center justify-between h-20 border-b border-blue-300 px-4">
           <div className="flex items-center space-x-2">
-            <i className="fas fa-heartbeat text-2xl text-green-400"></i>
+            <i className="fas fa-heartbeat text-2xl text-red-500"></i>
             <span className="text-xl font-bold">Moyo Admin</span>
           </div>
+          <button
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg font-bold text-sm ml-4"
+            onClick={() => {
+              // Simples redirect para a tela principal (ajuste conforme seu router)
+              window.location.href = "/";
+            }}
+            title="Sair da Conta"
+          >
+            Sair
+          </button>
         </div>
         
-        <div className="p-4">
-          {[
-            { id: "dashboard", icon: "fas fa-tachometer-alt", label: "Dashboard" },
-            { id: "hospitals", icon: "fas fa-hospital", label: "Hospitais" },
-            { id: "users", icon: "fas fa-users", label: "Usuários" },
-            { id: "statistics", icon: "fas fa-chart-line", label: "Estatísticas" },
-            { id: "financial", icon: "fas fa-money-bill-wave", label: "Financeiro" },
-            { id: "settings", icon: "fas fa-cog", label: "Configurações" }
-          ].map((item) => (
-            <button
-              key={item.id}
-              className={`flex items-center w-full px-4 py-3 my-1 rounded-lg transition-all duration-200 ${
-                activeTab === item.id ? "bg-blue-600 bg-opacity-30" : "hover:bg-blue-600 hover:bg-opacity-20"
-              }`}
-              onClick={() => {
-                setActiveTab(item.id);
-                if (window.innerWidth < 768) setSidebarOpen(false);
-              }}
-            >
-              <i className={`${item.icon} text-lg w-8`}></i>
-              <span className="font-medium">{item.label}</span>
-            </button>
-          ))}
+        <div className="p-4 flex flex-col h-full justify-between min-h-[70vh]">
+          <div>
+            {[
+              { id: "dashboard", icon: "fas fa-tachometer-alt", label: "Dashboard" },
+              { id: "hospitals", icon: "fas fa-hospital", label: "Hospitais" },
+              { id: "users", icon: "fas fa-users", label: "Usuários" },
+              { id: "statistics", icon: "fas fa-chart-line", label: "Estatísticas" },
+              { id: "financial", icon: "fas fa-money-bill-wave", label: "Financeiro" },
+              { id: "settings", icon: "fas fa-cog", label: "Configurações" }
+            ].map((item) => (
+              <button
+                key={item.id}
+                className={`flex items-center w-full px-4 py-3 my-1 rounded-lg transition-all duration-200 ${
+                  activeTab === item.id ? "bg-blue-600 bg-opacity-30" : "hover:bg-blue-600 hover:bg-opacity-20"
+                }`}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (window.innerWidth < 768) setSidebarOpen(false);
+                }}
+              >
+                <i className={`${item.icon} text-lg w-8`}></i>
+                <span className="font-medium">{item.label}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            className="flex items-center w-full px-4 py-3 my-1 rounded-lg transition-all duration-200 bg-red-500 hover:bg-red-600 text-white font-bold mt-8"
+            onClick={() => {
+              localStorage.removeItem("moyo-auth");
+              localStorage.removeItem("moyo-perfil");
+              window.location.href = "/login";
+            }}
+            title="Sair da Conta"
+          >
+            <i className="fas fa-sign-out-alt text-lg w-8"></i>
+            <span className="font-medium">Sair</span>
+          </button>
         </div>
       </div>
 
@@ -586,11 +610,11 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">BI</label>
                       <input 
                         type="text" 
                         className="w-full p-2 border border-gray-300 rounded-lg"
-                        placeholder="Buscar por CPF..."
+                        placeholder="Buscar por BI..."
                       />
                     </div>
                     <div>
@@ -609,7 +633,7 @@ const AdminDashboard = () => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BI</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acesso</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -617,48 +641,91 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.map((user) => (
-                          <tr key={user.cpf} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center">
-                                <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mr-3">
-                                  {user.id}
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{user.name}</div>
-                                  <div className="text-sm text-gray-500">{user.type}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">{user.cpf}</td>
-                            <td className="px-6 py-4">{user.email}</td>
-                            <td className="px-6 py-4">{user.lastAccess}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                user.status === 'Ativo' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : user.status === 'Pendente' 
-                                    ? 'bg-yellow-100 text-yellow-800' 
-                                    : 'bg-red-100 text-red-800'
-                              }`}>
-                                {user.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex space-x-2">
-                                <button className="text-blue-500 hover:text-blue-700">
-                                  <i className="fas fa-edit"></i>
-                                </button>
-                                <button className="text-red-500 hover:text-red-700">
-                                  <i className="fas fa-trash"></i>
-                                </button>
-                                <button className="text-green-500 hover:text-green-700">
-                                  <i className="fas fa-chart-line"></i>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {(activeUserTab === "patients" || activeUserTab === "professionals" || activeUserTab === "admins")
+                          ? filteredUsers.map((user) => (
+                              <tr key={user.cpf || user.bi || user.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center">
+                                    <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mr-3">
+                                      {user.id}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium text-gray-900">{user.name}</div>
+                                      <div className="text-sm text-gray-500">{user.type}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">{user.bi || user.cpf || "-"}</td>
+                                <td className="px-6 py-4">{user.email}</td>
+                                <td className="px-6 py-4">{user.lastAccess}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    user.status === 'Ativo' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : user.status === 'Pendente' 
+                                        ? 'bg-yellow-100 text-yellow-800' 
+                                        : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {user.status}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex space-x-2">
+                                    <button className="text-blue-500 hover:text-blue-700">
+                                      <i className="fas fa-edit"></i>
+                                    </button>
+                                    <button className="text-red-500 hover:text-red-700">
+                                      <i className="fas fa-trash"></i>
+                                    </button>
+                                    <button className="text-green-500 hover:text-green-700">
+                                      <i className="fas fa-chart-line"></i>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          : users.map((user) => (
+                              <tr key={user.cpf || user.bi || user.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center">
+                                    <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mr-3">
+                                      {user.id}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium text-gray-900">{user.name}</div>
+                                      <div className="text-sm text-gray-500">{user.type}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">{user.bi || user.cpf || "-"}</td>
+                                <td className="px-6 py-4">{user.email}</td>
+                                <td className="px-6 py-4">{user.lastAccess}</td>
+                                <td className="px-6 py-4">
+                                  <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    user.status === 'Ativo' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : user.status === 'Pendente' 
+                                        ? 'bg-yellow-100 text-yellow-800' 
+                                        : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {user.status}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex space-x-2">
+                                    <button className="text-blue-500 hover:text-blue-700">
+                                      <i className="fas fa-edit"></i>
+                                    </button>
+                                    <button className="text-red-500 hover:text-red-700">
+                                      <i className="fas fa-trash"></i>
+                                    </button>
+                                    <button className="text-green-500 hover:text-green-700">
+                                      <i className="fas fa-chart-line"></i>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
                       </tbody>
                     </table>
                   </div>
