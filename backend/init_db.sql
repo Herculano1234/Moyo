@@ -16,25 +16,6 @@ CREATE TABLE IF NOT EXISTS hospitais (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Atualização da tabela profissionais para vincular ao hospital
-ALTER TABLE profissionais
-ADD COLUMN hospital_id INTEGER REFERENCES hospitais(id);
-
--- Criar tabela de pacientes
-CREATE TABLE IF NOT EXISTS pacientes (
-    id SERIAL PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    senha_hash VARCHAR(255) NOT NULL,
-    data_nascimento DATE  NOT NULL,
-    sexo VARCHAR(10) NOT NULL,
-    telefone VARCHAR(20) NOT NULL,
-    endereco TEXT NOT NULL,
-    bi VARCHAR(50),
-    foto_perfil TEXT NOT NULL,
-    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Criar tabela de profissionais
 CREATE TABLE IF NOT EXISTS profissionais (
     id SERIAL PRIMARY KEY,
@@ -52,6 +33,25 @@ CREATE TABLE IF NOT EXISTS profissionais (
     registro_profissional VARCHAR(50) NOT NULL,
     foto_perfil TEXT NOT NULL,
     senha_hash VARCHAR(255) NOT NULL,
+    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Atualização da tabela profissionais para vincular ao hospital
+ALTER TABLE profissionais
+ADD COLUMN IF NOT EXISTS hospital_id INTEGER REFERENCES hospitais(id);
+
+-- Criar tabela de pacientes
+CREATE TABLE IF NOT EXISTS pacientes (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha_hash VARCHAR(255) NOT NULL,
+    data_nascimento DATE  NOT NULL,
+    sexo VARCHAR(10) NOT NULL,
+    telefone VARCHAR(20) NOT NULL,
+    endereco TEXT NOT NULL,
+    bi VARCHAR(50) NOT NULL,
+    foto_perfil TEXT NOT NULL,
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

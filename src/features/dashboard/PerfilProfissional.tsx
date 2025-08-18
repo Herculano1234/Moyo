@@ -42,7 +42,8 @@ export default function Dashboard() {
     const profissionalData = JSON.parse(user);
     setProfissional(profissionalData);
     // Buscar consultas do profissional
-    fetch(`http://localhost:4000/profissionais/${profissionalData.id}/consultas`)
+  const apiHost = window.location.hostname;
+  fetch(`http://${apiHost}:4000/profissionais/${profissionalData.id}/consultas`)
       .then(async (res) => {
         if (!res.ok) return setConsultas([]);
         const data = await res.json();

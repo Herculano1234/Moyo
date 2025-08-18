@@ -16,7 +16,8 @@ export default function DashboardHomePaciente() {
     const pacienteData = JSON.parse(user);
     setPaciente(pacienteData);
     // Buscar consultas do paciente
-    fetch(`http://localhost:4000/pacientes/${pacienteData.id}/consultas`)
+  const apiHost = window.location.hostname;
+  fetch(`http://${apiHost}:4000/pacientes/${pacienteData.id}/consultas`)
       .then(async (res) => {
         if (!res.ok) return setConsultas([]);
         const data = await res.json();

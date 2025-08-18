@@ -15,12 +15,13 @@ const AdminDashboard = () => {
   const [loadingUsers, setLoadingUsers] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:4000/hospitais")
+    const apiHost = window.location.hostname;
+    fetch(`http://${apiHost}:4000/hospitais`)
       .then(res => res.json())
       .then(data => setHospitals(data))
       .catch(() => setHospitals([]))
       .finally(() => setLoadingHospitals(false));
-    fetch("http://localhost:4000/profissionais-com-hospital")
+    fetch(`http://${apiHost}:4000/profissionais-com-hospital`)
       .then(res => res.json())
       .then(data => setUsers(data))
       .catch(() => setUsers([]))
