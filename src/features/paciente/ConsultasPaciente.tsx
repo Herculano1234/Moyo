@@ -10,7 +10,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
-
 // Descrições das especialidades médicas
 const descricoesEspecialidades = {
   "Cardiologia": "Especialidade médica que trata do coração e do sistema circulatório. Cuida de problemas como hipertensão, insuficiência cardíaca, arritmias e infarto.",
@@ -203,17 +202,31 @@ const perguntasTriagem = [
   }
 ];
 
-// Funções de armazenamento
-function getConsultas(): Consulta[] {
+// Funções de armazenamento e integração com API
+const apiHost = window.location.hostname;
+
+async function getConsultasAPI(pacienteId: string): Promise<Consulta[]> {
   try {
-    return JSON.parse(localStorage.getItem("moyo-consultas") || "[]");
+    const resp = await fetch(`http://${apiHost}:4000/pacientes/${pacienteId}/consultas`);
+    if (!resp.ok) throw new Error('Erro ao buscar consultas');
+    return await resp.json();
   } catch {
     return [];
   }
 }
 
-function saveConsultas(consultas: Consulta[]) {
-  localStorage.setItem("moyo-consultas", JSON.stringify(consultas));
+async function saveConsultaAPI(pacienteId: string, consulta: Omit<Consulta, 'id'>): Promise<Consulta|null> {
+  try {
+    const resp = await fetch(`http://${apiHost}:4000/pacientes/${pacienteId}/consultas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(consulta)
+    });
+    if (!resp.ok) throw new Error('Erro ao cadastrar consulta');
+    return await resp.json();
+  } catch {
+    return null;
+  }
 }
 
 // Função para calcular distância
@@ -290,11 +303,19 @@ function calcularUrgencia(respostas: { [key: string]: string | string[] }): { ni
 }
 
 // Componente MapaHospital
-const MapaHospital = ({ 
-  mapCenter, 
-  mapZoom, 
-  userLocation, 
-  unidadesFiltradas, 
+interface MapaHospitalProps {
+  mapCenter: [number, number];
+  mapZoom: number;
+  userLocation?: [number, number];
+  unidadesFiltradas: HospitalUnit[];
+  onSelectUnidade: (id: string) => void;
+  unidadeSelecionada?: string;
+}
+const MapaHospital: React.FC<MapaHospitalProps> = ({
+  mapCenter,
+  mapZoom,
+  userLocation,
+  unidadesFiltradas,
   onSelectUnidade,
   unidadeSelecionada
 }) => {
@@ -315,7 +336,7 @@ const MapaHospital = ({
             <Popup className="font-bold">Sua localização</Popup>
           </Marker>
         )}
-        {unidadesFiltradas.map(unidade => (
+  {unidadesFiltradas.map((unidade: HospitalUnit) => (
           <Marker 
             key={unidade.id} 
             position={[unidade.lat, unidade.lng]} 
@@ -332,7 +353,7 @@ const MapaHospital = ({
                 <div className="mt-1">
                   <span className="font-medium">Especialidades:</span> 
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {unidade.especialidades.slice(0, 3).map(esp => (
+                    {unidade.especialidades.slice(0, 3).map((esp: string) => (
                       <span key={esp} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
                         {esp}
                       </span>
@@ -360,7 +381,24 @@ const MapaHospital = ({
 };
 
 // Componente FormularioAgendamento
-const FormularioAgendamento = ({
+interface FormularioAgendamentoProps {
+  etapa: number;
+  especialidade: string;
+  setEspecialidade: (esp: string) => void;
+  data: string;
+  setData: (dt: string) => void;
+  unidadeSelecionada: string;
+  setUnidadeSelecionada: (id: string) => void;
+  unidadesFiltradas: HospitalUnit[];
+  unidadesHospitalares: HospitalUnit[];
+  onVoltar: () => void;
+  onContinuar: (etapa: number) => void;
+  onSubmit: () => void;
+  loading: boolean;
+  erro?: string;
+  userLocation?: [number, number];
+}
+const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
   etapa,
   especialidade,
   setEspecialidade,
@@ -428,7 +466,7 @@ const FormularioAgendamento = ({
           <h4 className="font-bold text-lg text-gray-700">Selecione a especialidade</h4>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {especialidadesDisponiveis.slice(0, 8).map(esp => (
+            {especialidadesDisponiveis.slice(0, 8).map((esp: string) => (
               <div 
                 key={esp}
                 className="relative"
@@ -533,7 +571,7 @@ const FormularioAgendamento = ({
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto p-1">
-            {unidadesComDistancia.map(unidade => (
+            {unidadesComDistancia.map((unidade: HospitalUnit) => (
               <div
                 key={unidade.id}
                 className={`border rounded-xl p-4 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
@@ -547,7 +585,7 @@ const FormularioAgendamento = ({
                 <div className="text-sm text-gray-600 mt-1">{unidade.endereco}</div>
                 
                 <div className="mt-3 flex flex-wrap gap-1">
-                  {unidade.especialidades.slice(0, 3).map(esp => (
+                  {unidade.especialidades.slice(0, 3).map((esp: string) => (
                     <span 
                       key={esp} 
                       className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
@@ -601,7 +639,7 @@ const FormularioAgendamento = ({
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {datasDisponiveis.map(dt => (
+            {datasDisponiveis.map((dt: string) => (
               <button
                 key={dt}
                 type="button"
@@ -649,30 +687,39 @@ const FormularioAgendamento = ({
 };
 
 // Componente TriagemModal
-const TriagemModal = ({ 
-  show, 
-  onClose, 
-  onComplete, 
+interface TriagemModalProps {
+  show: boolean;
+  onClose: () => void;
+  onComplete: (respostas: Record<string, string | string[]>, urgencia: { nivel: string, cor: string }) => void;
+  unidadeNome: string;
+  loading: boolean;
+}
+// @ts-ignore
+type SpeechRecognitionType = typeof window.SpeechRecognition extends undefined ? typeof window.webkitSpeechRecognition : typeof window.SpeechRecognition;
+const TriagemModal: React.FC<TriagemModalProps> = ({
+  show,
+  onClose,
+  onComplete,
   unidadeNome,
   loading
 }) => {
-  const [respostas, setRespostas] = useState({});
+  const [respostas, setRespostas] = useState<Record<string, string | string[]>>({});
   const [etapaTriagem, setEtapaTriagem] = useState(0);
-  const [urgencia, setUrgencia] = useState(null);
-  
-  const handleChange = (id, valor) => {
+  const [urgencia, setUrgencia] = useState<{ nivel: string, cor: string } | null>(null);
+
+  const handleChange = (id: string, valor: string | string[]) => {
     setRespostas(prev => ({ ...prev, [id]: valor }));
   };
-  
-  const handleSubmit = (e) => {
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const nivelUrgencia = calcularUrgencia(respostas);
     setUrgencia(nivelUrgencia);
     onComplete(respostas, nivelUrgencia);
   };
-  
+
   const progresso = ((etapaTriagem + 1) / perguntasTriagem.length) * 100;
-  
+
   if (!show) return null;
   
   return (
@@ -786,12 +833,42 @@ const TriagemModal = ({
               )}
               
               {perguntasTriagem[etapaTriagem].tipo === "textarea" && (
-                <textarea
-                  className="w-full border border-gray-200 rounded-xl p-4 focus:ring focus:ring-moyo-primary focus:border-moyo-primary min-h-[120px]"
-                  value={respostas[perguntasTriagem[etapaTriagem].id] || ""}
-                  onChange={e => handleChange(perguntasTriagem[etapaTriagem].id, e.target.value)}
-                  placeholder="Por favor, descreva em detalhes..."
-                />
+                <div className="relative">
+                  <textarea
+                    className="w-full border border-gray-200 rounded-xl p-4 focus:ring focus:ring-moyo-primary focus:border-moyo-primary min-h-[120px] pr-12"
+                    value={respostas[perguntasTriagem[etapaTriagem].id] || ""}
+                    onChange={e => handleChange(perguntasTriagem[etapaTriagem].id, e.target.value)}
+                    placeholder="Por favor, descreva em detalhes..."
+                  />
+                  <button
+                    type="button"
+                    className="absolute top-3 right-3 text-moyo-primary hover:text-moyo-secondary bg-white rounded-full p-2 shadow focus:outline-none"
+                    title="Usar microfone"
+                    onClick={() => {
+                      // @ts-ignore
+                      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                      if (!SpeechRecognition) {
+                        alert('Reconhecimento de voz não suportado neste navegador.');
+                        return;
+                      }
+                      const recognition = new SpeechRecognition();
+                      recognition.lang = 'pt-BR';
+                      recognition.interimResults = false;
+                      recognition.maxAlternatives = 1;
+                      recognition.onresult = (event: any) => {
+                        const texto = event.results[0][0].transcript;
+                        const atual = respostas[perguntasTriagem[etapaTriagem].id] || "";
+                        handleChange(perguntasTriagem[etapaTriagem].id, (atual ? atual + ' ' : '') + texto);
+                      };
+                      recognition.onerror = (event: any) => {
+                        alert('Erro no reconhecimento de voz: ' + event.error);
+                      };
+                      recognition.start();
+                    }}
+                  >
+                    <i className="fas fa-microphone text-lg"></i>
+                  </button>
+                </div>
               )}
               
               <div className="flex justify-between">
@@ -1038,10 +1115,10 @@ export default function ConsultasPaciente() {
   const [agendado, setAgendado] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [consultas, setConsultas] = useState([]);
+  const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [filtroEsp, setFiltroEsp] = useState("");
   const [filtroData, setFiltroData] = useState("");
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [unidadesFiltradas, setUnidadesFiltradas] = useState([]);
   const [unidadeSelecionada, setUnidadeSelecionada] = useState(null);
   const [mapCenter, setMapCenter] = useState([-8.8383, 13.2344]);
@@ -1050,7 +1127,17 @@ export default function ConsultasPaciente() {
 
   // Obter consultas e localização ao carregar
   useEffect(() => {
-    setConsultas(getConsultas());
+    const user = localStorage.getItem("moyo-user");
+    let pacienteId = null;
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        pacienteId = parsed.id;
+      } catch {}
+    }
+    if (pacienteId) {
+      getConsultasAPI(pacienteId).then(setConsultas);
+    }
     obterLocalizacaoUsuario();
   }, []);
 
@@ -1145,7 +1232,9 @@ export default function ConsultasPaciente() {
 
       const novasConsultas = [novaConsulta, ...consultas];
       setConsultas(novasConsultas);
-      saveConsultas(novasConsultas);
+      const user = localStorage.getItem("moyo-user");
+      const pacienteData = JSON.parse(user);
+      saveConsultaAPI(pacienteData.id,novasConsultas);
 
       // Resetar estados
       setAgendado(true);
@@ -1167,7 +1256,7 @@ export default function ConsultasPaciente() {
         c.id === id ? { ...c, status: "cancelada" } : c
       );
       setConsultas(novas);
-      saveConsultas(novas);
+      saveConsultaAPI(pacienteData.id,novas);
       setLoading(false);
     }, 1000);
   };
@@ -1194,6 +1283,28 @@ export default function ConsultasPaciente() {
       (!filtroEsp || c.especialidade.includes(filtroEsp)) && 
       (!filtroData || c.data === filtroData)
     );
+
+  // Função para exibir perguntas e respostas coloridas
+  function renderPerguntasRespostas(triagem: Record<string, string | string[]>) {
+    if (!triagem) return null;
+    return (
+      <div className="space-y-2 mt-2">
+        {Object.entries(triagem).map(([pid, resposta], idx) => {
+          const pergunta = perguntasTriagem.find(p => p.id === pid);
+          return (
+            <div key={pid} className="flex flex-col">
+              <span className="font-semibold text-moyo-primary bg-moyo-primary/10 px-2 py-1 rounded-t-md">
+                {pergunta ? pergunta.texto : pid}
+              </span>
+              <span className="bg-moyo-secondary/10 text-moyo-secondary px-2 py-1 rounded-b-md border-b border-moyo-secondary/20">
+                {Array.isArray(resposta) ? resposta.join(", ") : resposta}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   const especialidadesDisponiveis = Array.from(new Set(consultas.map(c => c.especialidade)));
   const unidadeSelecionadaObj = unidadesHospitalares.find(u => u.id === unidadeSelecionada);

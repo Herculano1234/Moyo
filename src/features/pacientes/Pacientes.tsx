@@ -20,8 +20,7 @@ export default function Pacientes() {
       setLoading(true);
       setErro("");
       try {
-  const apiHost = window.location.hostname;
-  const resp = await fetch(`http://${apiHost}:4000/pacientes`);
+        const resp = await fetch("http://localhost:4000/pacientes");
         const data = await resp.json();
         setPacientes(data);
       } catch (e) {

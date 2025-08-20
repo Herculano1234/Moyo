@@ -9,8 +9,7 @@ export default function PerfilPaciente({ paciente, setPaciente }: { paciente: an
 
   async function handleSave() {
     try {
-  const apiHost = window.location.hostname;
-  const response = await fetch(`http://${apiHost}:4000/pacientes/${paciente.id}`, {
+      const response = await fetch(`http://localhost:4000/pacientes/${paciente.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, telefone, endereco, foto_perfil: fotoPerfil })

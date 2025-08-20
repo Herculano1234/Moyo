@@ -37,8 +37,7 @@ export default function Dashboard() {
       setLoading(true);
       setErro("");
       try {
-  const apiHost = window.location.hostname;
-  const resp = await fetch(`http://${apiHost}:4000/consultas`);
+        const resp = await fetch("http://localhost:4000/consultas");
         const data = await resp.json();
         setConsultas(data);
       } catch (e) {
@@ -49,8 +48,7 @@ export default function Dashboard() {
     }
     async function fetchPacientes() {
       try {
-  const apiHost = window.location.hostname;
-  const resp = await fetch(`http://${apiHost}:4000/pacientes`);
+        const resp = await fetch("http://localhost:4000/pacientes");
         const data = await resp.json();
         setPacientes(data);
       } catch {}

@@ -12,16 +12,6 @@ import Login from "./features/auth/Login";
 import LandingPage from "./features/LandingPage";
 import Signup from "./features/auth/Signup";
 import { Routes, Route, useLocation, Navigate, Outlet } from "react-router-dom";
-import AdminDashboard from "./features/dashboard/AdminDashboard";
-function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const isAuth = localStorage.getItem("moyo-auth") === "true";
-  const userPerfil = localStorage.getItem("moyo-perfil");
-  const location = useLocation();
-  if (!isAuth || userPerfil !== "admin") {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-  return <>{children}</>;
-}
 import PacienteDashboard from "./features/paciente/PacienteDashboard";
 
 function RequireAuth({ perfil }: { children?: React.ReactNode; perfil: string }) {
@@ -89,12 +79,6 @@ function App() {
           <Route index element={<PacienteDashboard />} />
         </Route>
       </Route>
-      {/* Rota do Admin */}
-      <Route path="/admin" element={
-        <RequireAdmin>
-          <AdminDashboard />
-        </RequireAdmin>
-      } />
     </Routes>
   );
 }

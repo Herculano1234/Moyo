@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -34,30 +33,6 @@ async function initializeDatabase(pool) {
 // Executar a inicialização do banco de dados
 initializeDatabase(pool);
 
-// Listar hospitais
-app.get("/hospitais", async (req, res) => {
-  try {
-    const { rows } = await pool.query("SELECT * FROM hospitais");
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar hospitais" });
-  }
-});
-
-// Listar profissionais com hospital vinculado
-app.get("/profissionais-com-hospital", async (req, res) => {
-  try {
-    const { rows } = await pool.query(`
-      SELECT p.*, h.nome as hospital_nome, h.id as hospital_id
-      FROM profissionais p
-      LEFT JOIN hospitais h ON p.hospital_id = h.id
-    `);
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar profissionais" });
-  }
-});
-
 app.get("/", (req, res) => {
   res.send("API Moyo rodando!");
 });
@@ -71,16 +46,7 @@ app.get("/pacientes", async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar pacientes" });
   }
 });
-app.get("/pacientesf", async (req, res) => {
-  try {
-    const { rows } = await pool.query("SELECT id, nome, email, data_nascimento, sexo, telefone, endereco, bi FROM pacientes");
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar pacientes" });
-  }
-});
 
-// Cadastro de paciente
 // Atualizar dados do paciente
 app.put("/pacientes/:id", async (req, res) => {
   const { id } = req.params;
@@ -97,9 +63,10 @@ app.put("/pacientes/:id", async (req, res) => {
     res.status(500).json({ error: "Erro ao atualizar paciente" });
   }
 });
+// Cadastro de paciente
 app.post("/pacientes", async (req, res) => {
   const { nome, email, senha, data_nascimento, sexo, telefone, endereco, bi, foto_perfil } = req.body;
-  if (!nome || !email || !senha || !bi) return res.status(400).json({ error: "Campos obrigatórios" });
+  if (!nome || !email || !senha) return res.status(400).json({ error: "Campos obrigatórios" });
   try {
     const hash = await bcrypt.hash(senha, 10);
     const result = await pool.query(
@@ -205,7 +172,7 @@ app.post("/profissionais", async (req, res) => {
     senha,
     foto_perfil
   } = req.body;
-  if (!nome || !email || !senha || !bi) return res.status(400).json({ error: "Campos obrigatórios" });
+  if (!nome || !email || !senha) return res.status(400).json({ error: "Campos obrigatórios" });
   try {
     const hash = await bcrypt.hash(senha, 10);
     const result = await pool.query(

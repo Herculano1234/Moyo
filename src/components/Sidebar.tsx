@@ -108,7 +108,7 @@ export default function Sidebar() {
             <div className="flex items-center gap-3">
               <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
               <div className="hidden xl:block lg:hidden">
-                <p className="text-sm font-medium">Dr. Silva</p>
+                <p className="text-sm font-medium">Dr. Herculano</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Administrador</p>
               </div>
             </div>

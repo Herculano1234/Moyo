@@ -34,8 +34,7 @@ export default function Signup() {
     if (perfil === "profissional" && (!unidade || !municipio || !area || !cargo)) return setError("Preencha todos os campos do profissional.");
 
     try {
-  const apiHost = window.location.hostname;
-  let url = `http://${apiHost}:4000/pacientes`;
+      let url = "http://localhost:4000/pacientes";
       let body: any = {
         nome,
         email,
@@ -44,11 +43,10 @@ export default function Signup() {
         sexo,
         telefone: contacto,
         endereco: morada,
-        bi,
         foto_perfil: fotoPerfil,
       };
       if (perfil === "profissional") {
-  url = `http://${apiHost}:4000/profissionais`;
+        url = "http://localhost:4000/profissionais";
         body = {
           nome,
           data_nascimento: dataNascimento,
