@@ -244,6 +244,34 @@ app.post("/profissionais", async (req, res) => {
     res.status(500).json({ error: "Erro ao cadastrar profissional", detalhes: err.message });
   }
 });
+// Cadastrar hospital ou clínica
+app.post("/hospitais", async (req, res) => {
+  const {
+    nome,
+    endereco,
+    cidade,
+    provincia,
+    latitude,
+    longitude,
+    areas_trabalho,
+    exames_disponiveis,
+    telefone,
+    email,
+    site
+  } = req.body;
+  if (!nome) return res.status(400).json({ error: "Campo nome é obrigatório" });
+  try {
+    const result = await pool.query(
+      `INSERT INTO hospitais (nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Erro ao cadastrar hospital:", err);
+    res.status(500).json({ error: "Erro ao cadastrar hospital", detalhes: err.message });
+  }
+});
 
 // Login de profissional
 app.post("/login-profissional", async (req, res) => {

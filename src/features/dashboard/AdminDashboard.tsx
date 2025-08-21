@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const AdminDashboard = () => {
@@ -7,16 +8,45 @@ const AdminDashboard = () => {
   const [activeHospitalTab, setActiveHospitalTab] = useState("list");
   const [activeUserTab, setActiveUserTab] = useState("patients");
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Dados de exemplo
-  const hospitals = [
-  { id: 1, name: "Hospital Central", address: "Av. Paulista, 1000 - SP", capacity: 320, specialties: "Cardiologia, Oncologia", manager: "Dr. Carlos Silva", status: "ativo" },
-    { id: 2, name: "Santa Casa", address: "R. das Flores, 200 - RJ", capacity: 180, specialties: "Pediatria, Ortopedia", manager: "Dra. Ana Oliveira", status: "ativo" },
-    { id: 3, name: "Hospital do Coração", address: "Av. Brasil, 1500 - SP", capacity: 250, specialties: "Cardiologia", manager: "Dr. Roberto Mendes", status: "manutenção" },
-    { id: 4, name: "Instituto de Oncologia", address: "R. das Palmeiras, 400 - MG", capacity: 120, specialties: "Oncologia", manager: "Dra. Juliana Costa", status: "ativo" },
-    { id: 5, name: "Hospital Geral de Campinas", address: "Av. John Boyd Dunlop, 500 - SP", capacity: 420, specialties: "Emergência, Clínica Geral", manager: "Dr. Fernando Lima", status: "ativo" },
-    { id: 6, name: "Clínica Especializada São José", address: "R. Sete de Setembro, 250 - MG", capacity: 80, specialties: "Ortopedia, Fisioterapia", manager: "Dra. Mariana Souza", status: "ativo" },
-  ];
+  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [showHospitalModal, setShowHospitalModal] = useState(false);
+  const [hospitalForm, setHospitalForm] = useState({
+    nome: '', endereco: '', cidade: '', provincia: '', latitude: '', longitude: '', areas_trabalho: '', exames_disponiveis: '', telefone: '', email: '', site: ''
+  });
+  const [loadingHospitals, setLoadingHospitals] = useState(false);
+  const [errorHosp, setErrorHosp] = useState<string|null>(null);
+
+  // Buscar hospitais do backend (simples, só para demo)
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      setLoadingHospitals(true);
+      try {
+        const res = await axios.get('/hospitais');
+        setHospitals(res.data);
+      } catch (e) {
+        setHospitals([]);
+      }
+      setLoadingHospitals(false);
+    };
+    fetchHospitals();
+  }, []);
+
+  const handleHospitalInput = (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>) => {
+    setHospitalForm({ ...hospitalForm, [e.target.name]: e.target.value });
+  };
+
+  const handleHospitalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorHosp(null);
+    try {
+      const res = await axios.post('/hospitais', hospitalForm);
+      setHospitals([res.data, ...hospitals]);
+      setShowHospitalModal(false);
+      setHospitalForm({ nome: '', endereco: '', cidade: '', provincia: '', latitude: '', longitude: '', areas_trabalho: '', exames_disponiveis: '', telefone: '', email: '', site: '' });
+    } catch (err: any) {
+      setErrorHosp(err?.response?.data?.error || 'Erro ao cadastrar hospital');
+    }
+  };
   
   const users = [
     { id: "JS", name: "João Silva", cpf: "123.456.789-00", email: "joao@exemplo.com", lastAccess: "14/08/2025", status: "Ativo", type: "Paciente" },
@@ -36,9 +66,8 @@ const AdminDashboard = () => {
   
   // Filtrar hospitais baseado no termo de busca
   const filteredHospitals = hospitals.filter(hospital => 
-    hospital.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    hospital.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    hospital.manager.toLowerCase().includes(searchTerm.toLowerCase())
+    (hospital.nome || hospital.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (hospital.endereco || hospital.address || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   // Filtrar usuários baseado no tipo selecionado
@@ -289,9 +318,36 @@ const AdminDashboard = () => {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Gestão de Hospitais</h1>
                 <div className="flex flex-wrap gap-3">
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center" onClick={() => setShowHospitalModal(true)}>
                     <i className="fas fa-plus mr-2"></i> Adicionar Hospital
                   </button>
+
+                  {/* Modal de cadastro de hospital */}
+                  {showHospitalModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                      <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-8 relative animate-fadeIn">
+                        <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={() => setShowHospitalModal(false)}>
+                          <i className="fas fa-times"></i>
+                        </button>
+                        <h2 className="text-2xl font-bold mb-4">Cadastrar Hospital/Clínica</h2>
+                        <form onSubmit={handleHospitalSubmit} className="space-y-4">
+                          <input className="w-full border p-2 rounded" name="nome" placeholder="Nome" value={hospitalForm.nome} onChange={handleHospitalInput} required />
+                          <input className="w-full border p-2 rounded" name="endereco" placeholder="Endereço" value={hospitalForm.endereco} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="cidade" placeholder="Cidade" value={hospitalForm.cidade} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="provincia" placeholder="Província" value={hospitalForm.provincia} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="latitude" placeholder="Latitude" value={hospitalForm.latitude} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="longitude" placeholder="Longitude" value={hospitalForm.longitude} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="areas_trabalho" placeholder="Áreas de Trabalho" value={hospitalForm.areas_trabalho} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="exames_disponiveis" placeholder="Exames Disponíveis" value={hospitalForm.exames_disponiveis} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="telefone" placeholder="Telefone" value={hospitalForm.telefone} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="email" placeholder="Email" value={hospitalForm.email} onChange={handleHospitalInput} />
+                          <input className="w-full border p-2 rounded" name="site" placeholder="Site" value={hospitalForm.site} onChange={handleHospitalInput} />
+                          {errorHosp && <div className="text-red-500 text-sm">{errorHosp}</div>}
+                          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Cadastrar</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                   <button className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
                     <i className="fas fa-print mr-2"></i> Imprimir
                   </button>
