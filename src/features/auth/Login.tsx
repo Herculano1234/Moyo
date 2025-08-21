@@ -7,12 +7,12 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // Configuração do Firebase (substitua com suas credenciais)
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO",
-  storageBucket: "SEU_PROJETO.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID"
+  apiKey: "AIzaSyDJARbQHXV9eGtl1ftJkeoEk-t04ZNGmK4",
+  authDomain: "moyo-63267.firebaseapp.com",
+  projectId: "moyo-63267",
+  storageBucket: "moyo-63267.firebasestorage.app",
+  messagingSenderId: "475390838922",
+  appId: "1:475390838922:web:90b4044ecd8124c15bc573"
 };
 
 // Inicialize o Firebase
@@ -75,10 +75,20 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
     setIsMounted(true);
-    return () => setIsMounted(false);
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      setIsMounted(false);
+    };
   }, []);
 
   // Login com Google
@@ -146,7 +156,7 @@ export default function Login() {
         localStorage.setItem("moyo-auth", "true");
         localStorage.setItem("moyo-perfil", "admin");
         setLoading(false);
-        navigate("/admin");
+        navigate("/admindasboard");
       }, 1000);
       return;
     }
@@ -296,33 +306,46 @@ export default function Login() {
               <span className="text-3xl font-extrabold">Moyo</span>
             </div>
             
-            <h1 className="text-2xl md:text-3xl font-bold mb-4 animate-fadeIn" style={{ animationDelay: "0.2s" }}>
-              {t('loginBemVindo') || "Bem-vindo ao Moyo"}
-            </h1>
-            
-            <p className="text-base md:text-lg mb-6 opacity-90 max-w-md animate-fadeIn" style={{ animationDelay: "0.4s" }}>
-              {t('loginMensagem') || "Sua plataforma de saúde completa e integrada"}
-            </p>
-            
-            <div className="flex flex-col gap-4 mt-4 animate-fadeIn" style={{ animationDelay: "0.6s" }}>
-              <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1">
-                <i className="fas fa-shield-alt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
-                <span className="text-sm md:text-base">{t('loginSeguroCriptografia') || "Segurança com criptografia avançada"}</span>
-              </div>
-              <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1" style={{ transitionDelay: "0.1s" }}>
-                <i className="fas fa-bolt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
-                <span className="text-sm md:text-base">{t('loginTriagemIA') || "Triagem inteligente com IA"}</span>
-              </div>
-              <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1" style={{ transitionDelay: "0.2s" }}>
-                <i className="fas fa-mobile-alt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
-                <span className="text-sm md:text-base">{t('loginAcessoDispositivo') || "Acesso em qualquer dispositivo"}</span>
-              </div>
-            </div>
+            {!isMobile && (
+              <>
+                <h1 className="text-2xl md:text-3xl font-bold mb-4 animate-fadeIn" style={{ animationDelay: "0.2s" }}>
+                  {t('loginBemVindo') || "Bem-vindo ao Moyo"}
+                </h1>
+                
+                <p className="text-base md:text-lg mb-6 opacity-90 max-w-md animate-fadeIn" style={{ animationDelay: "0.4s" }}>
+                  {t('loginMensagem') || "Sua plataforma de saúde completa e integrada"}
+                </p>
+                
+                <div className="flex flex-col gap-4 mt-4 animate-fadeIn" style={{ animationDelay: "0.6s" }}>
+                  <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1">
+                    <i className="fas fa-shield-alt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+                    <span className="text-sm md:text-base">{t('loginSeguroCriptografia') || "Segurança com criptografia avançada"}</span>
+                  </div>
+                  <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1" style={{ transitionDelay: "0.1s" }}>
+                    <i className="fas fa-bolt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+                    <span className="text-sm md:text-base">{t('loginTriagemIA') || "Triagem inteligente com IA"}</span>
+                  </div>
+                  <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1" style={{ transitionDelay: "0.2s" }}>
+                    <i className="fas fa-mobile-alt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+                    <span className="text-sm md:text-base">{t('loginAcessoDispositivo') || "Acesso em qualquer dispositivo"}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* Lado direito: formulário */}
         <div className="login-right flex-1 p-6 md:p-8 flex flex-col justify-center bg-white">
+          {isMobile && (
+            <div className="flex items-center justify-center mb-6 animate-fadeIn">
+              <span className="text-4xl mr-3 transform transition-all duration-700 hover:rotate-12 text-moyo-primary">
+                <i className="fas fa-heartbeat pulsing"></i>
+              </span>
+              <span className="text-3xl font-extrabold text-moyo-primary">Moyo</span>
+            </div>
+          )}
+          
           <div className="flex justify-end mb-4">
             <a href="/" className="flex items-center gap-2 text-moyo-primary font-medium hover:text-moyo-secondary transition-all duration-300 group text-sm">
               <i className="fas fa-arrow-left transition-transform duration-300 group-hover:-translate-x-1 text-xs"></i> 

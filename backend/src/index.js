@@ -1,3 +1,4 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -33,6 +34,45 @@ async function initializeDatabase(pool) {
 // Executar a inicialização do banco de dados
 initializeDatabase(pool);
 
+// Listar consultas de um paciente específico
+app.get("/pacientes/:id/consultas", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, paciente_id, profissional_id, data_hora, status, prioridade, local, created_at
+       FROM consultas WHERE paciente_id = $1 ORDER BY data_hora DESC`,
+      [id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Erro ao buscar consultas do paciente:", err);
+    res.status(500).json({ error: "Erro ao buscar consultas do paciente", detalhes: err.message });
+  }
+});
+
+// Cadastrar consulta para um paciente específico
+app.post("/pacientes/:id/consultas", async (req, res) => {
+  const { id } = req.params;
+  const {
+    data_hora,
+    status = 'agendada',
+    prioridade = null,
+    local = null
+  } = req.body;
+  if (!data_hora) return res.status(400).json({ error: "Campo data_hora é obrigatório" });
+  try {
+    // profissional_id começa como null ("A ser definido" será tratado na aplicação)
+    const result = await pool.query(
+      `INSERT INTO consultas (paciente_id, profissional_id, data_hora, status, prioridade, local)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [id, null, data_hora, status, prioridade, local]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Erro ao agendar consulta:", err);
+    res.status(500).json({ error: "Erro ao agendar consulta", detalhes: err.message });
+  }
+});
 app.get("/", (req, res) => {
   res.send("API Moyo rodando!");
 });

@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
 // Descrições das especialidades médicas
 const descricoesEspecialidades = {
   "Cardiologia": "Especialidade médica que trata do coração e do sistema circulatório. Cuida de problemas como hipertensão, insuficiência cardíaca, arritmias e infarto.",
-  "Pediatria": "Especialidade médica dedicada à saúde de crianças e adolescentes. Aborda desde cuidados neonatais até doenças infantis e acompanhamento do desenvolvimento.",
+  "Pediatria": "Especialidade médica dedicada à saúde de crianças e adolescentes. Aborda desde cuidados neonatais até doenças infantais e acompanhamento do desenvolvimento.",
   "Clínica Geral": "Atendimento médico geral para diagnóstico e tratamento de diversas condições de saúde. É a porta de entrada para o sistema de saúde.",
   "Ortopedia": "Especialidade médica que trata de problemas relacionados aos ossos, músculos, ligamentos e articulações. Cuida de fraturas, luxações e doenças como artrite.",
   "Dermatologia": "Especialidade médica que trata da pele, cabelos e unhas. Diagnostica e trata doenças como acne, psoríase, dermatites e câncer de pele.",
@@ -119,15 +119,16 @@ const userIcon = new L.Icon({
 });
 
 // Interfaces
+// Nova interface Consulta alinhada ao backend
 interface Consulta {
-  id: string;
-  especialidade: string;
-  data: string;
-  status: "pendente" | "concluida" | "cancelada";
-  triagem?: { [key: string]: string | string[] };
-  unidadeId?: string;
-  unidadeNome?: string;
-  nivelUrgencia?: string;
+  id: number;
+  paciente_id: number;
+  profissional_id: number | null;
+  data_hora: string;
+  status: string;
+  prioridade?: string | null;
+  local?: string | null;
+  created_at: string;
 }
 
 interface HospitalUnit {
@@ -215,12 +216,19 @@ async function getConsultasAPI(pacienteId: string): Promise<Consulta[]> {
   }
 }
 
-async function saveConsultaAPI(pacienteId: string, consulta: Omit<Consulta, 'id'>): Promise<Consulta|null> {
+// Função para salvar consulta (status sempre 'pendente' ao criar)
+async function saveConsultaAPI(pacienteId: number, consulta: Partial<Consulta>): Promise<Consulta|null> {
   try {
+    const payload = {
+      data_hora: consulta.data_hora, // já no formato ISO
+      status: 'pendente', // sempre pendente ao criar
+      prioridade: consulta.prioridade || null,
+      local: consulta.local || null
+    };
     const resp = await fetch(`http://${apiHost}:4000/pacientes/${pacienteId}/consultas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(consulta)
+      body: JSON.stringify(payload)
     });
     if (!resp.ok) throw new Error('Erro ao cadastrar consulta');
     return await resp.json();
@@ -381,22 +389,23 @@ const MapaHospital: React.FC<MapaHospitalProps> = ({
 };
 
 // Componente FormularioAgendamento
+// Ajuste de tipos para props
 interface FormularioAgendamentoProps {
   etapa: number;
   especialidade: string;
   setEspecialidade: (esp: string) => void;
   data: string;
   setData: (dt: string) => void;
-  unidadeSelecionada: string;
+  unidadeSelecionada: string | null;
   setUnidadeSelecionada: (id: string) => void;
   unidadesFiltradas: HospitalUnit[];
   unidadesHospitalares: HospitalUnit[];
   onVoltar: () => void;
   onContinuar: (etapa: number) => void;
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   loading: boolean;
   erro?: string;
-  userLocation?: [number, number];
+  userLocation?: [number, number] | null;
 }
 const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
   etapa,
@@ -415,10 +424,10 @@ const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
   erro,
   userLocation
 }) => {
-  const [hoveredEspecialidade, setHoveredEspecialidade] = useState(null);
+  const [hoveredEspecialidade, setHoveredEspecialidade] = useState<string | null>(null);
   const [showDescription, setShowDescription] = useState(false);
   const [showModalDescricao, setShowModalDescricao] = useState(false);
-  const [selectedEspecialidade, setSelectedEspecialidade] = useState(null);
+  const [selectedEspecialidade, setSelectedEspecialidade] = useState<string | null>(null);
   
   const especialidadesDisponiveis = useMemo(() => {
     const todas = unidadesHospitalares.flatMap(u => u.especialidades);
@@ -454,9 +463,15 @@ const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
   }, [unidadeSelecionada, unidadesHospitalares]);
 
   // Abrir modal de descrição em dispositivos móveis
-  const handleOpenModal = (esp) => {
-    setSelectedEspecialidade(esp);
+  const handleOpenModal = (esp: string) => {
+    setHoveredEspecialidade(esp);
     setShowModalDescricao(true);
+  };
+
+  // Para acessar descricoesEspecialidades de forma segura
+  const getDescricaoEspecialidade = (esp: string | null | undefined): string => {
+    if (!esp) return "Descrição não disponível.";
+    return descricoesEspecialidades[esp as keyof typeof descricoesEspecialidades] || "Descrição não disponível.";
   };
 
   return (
@@ -494,7 +509,7 @@ const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
                     style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '10px' }}>
                     <div className="text-sm text-gray-700 font-medium mb-1">{esp}</div>
                     <div className="text-xs text-gray-600">
-                      {descricoesEspecialidades[esp] || "Descrição não disponível."}
+                      {getDescricaoEspecialidade(esp)}
                     </div>
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-0 h-0 
                       border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"></div>
@@ -509,7 +524,7 @@ const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
             {hoveredEspecialidade ? (
               <>
                 <div className="font-medium text-moyo-primary">{hoveredEspecialidade}</div>
-                <div>{descricoesEspecialidades[hoveredEspecialidade] || "Descrição não disponível."}</div>
+                <div>{getDescricaoEspecialidade(hoveredEspecialidade)}</div>
               </>
             ) : (
               "Toque em uma especialidade para ver sua descrição"
@@ -529,12 +544,14 @@ const FormularioAgendamento: React.FC<FormularioAgendamentoProps> = ({
                   </button>
                 </div>
                 <p className="text-gray-600">
-                  {descricoesEspecialidades[selectedEspecialidade] || "Descrição não disponível."}
+                  {selectedEspecialidade && descricoesEspecialidades[selectedEspecialidade]
+                    ? descricoesEspecialidades[selectedEspecialidade]
+                    : "Descrição não disponível."}
                 </p>
                 <div className="mt-6">
                   <button
                     onClick={() => {
-                      setEspecialidade(selectedEspecialidade);
+                      selectedEspecialidade && setEspecialidade(selectedEspecialidade);
                       setShowModalDescricao(false);
                     }}
                     className="w-full bg-moyo-primary text-white py-2 rounded-lg font-bold"
@@ -766,7 +783,7 @@ const TriagemModal: React.FC<TriagemModalProps> = ({
               
               {perguntasTriagem[etapaTriagem].tipo === "select" && (
                 <div className="space-y-4">
-                  {perguntasTriagem[etapaTriagem].opcoes.map((opcao, index) => (
+                  {perguntasTriagem[etapaTriagem]?.opcoes?.map((opcao, index) => (
                     <button
                       key={index}
                       type="button"
@@ -785,7 +802,7 @@ const TriagemModal: React.FC<TriagemModalProps> = ({
               
               {perguntasTriagem[etapaTriagem].tipo === "multiselect" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {perguntasTriagem[etapaTriagem].opcoes.map((opcao, index) => {
+                  {perguntasTriagem[etapaTriagem]?.opcoes?.map((opcao, index) => {
                     const respostaAtual = respostas[perguntasTriagem[etapaTriagem].id];
                     const selecionado = Array.isArray(respostaAtual) && respostaAtual.includes(opcao);
                     
@@ -991,11 +1008,19 @@ const TriagemModal: React.FC<TriagemModalProps> = ({
                   >
                     Revisar Respostas
                   </button>
-                  
                   <button
-                    type="submit"
+                    type="button"
                     className="bg-moyo-primary text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-moyo-secondary transition"
                     disabled={loading}
+                    onClick={() => {
+                      if (urgencia) {
+                        onComplete(respostas, urgencia);
+                      }
+                      setRespostas({});
+                      setEtapaTriagem(0);
+                      setUrgencia(null);
+                      onClose();
+                    }}
                   >
                     {loading ? 'Finalizando...' : 'Confirmar Agendamento'}
                   </button>
@@ -1010,25 +1035,28 @@ const TriagemModal: React.FC<TriagemModalProps> = ({
 };
 
 // Componente ConsultaCard
-const ConsultaCard = ({ consulta, onCancel, loading }) => {
+interface ConsultaCardProps {
+  consulta: Consulta;
+  onCancel: (id: number) => void;
+  loading: boolean;
+}
+const ConsultaCard: React.FC<ConsultaCardProps> = ({ consulta, onCancel, loading }) => {
   const [expanded, setExpanded] = useState(false);
   
   return (
     <div className={`border rounded-xl p-4 transition-all duration-300 ${expanded ? 'bg-white shadow-lg' : 'bg-gray-50'}`}>
       <div className="flex justify-between items-start">
         <div>
-          <div className="font-bold text-moyo-primary">{consulta.especialidade}</div>
+          <div className="font-bold text-moyo-primary">{consulta.status.charAt(0).toUpperCase() + consulta.status.slice(1)}</div>
           <div className="text-sm text-gray-600 mt-1">
-            {new Date(consulta.data).toLocaleDateString('pt-BR', { 
-              weekday: 'short', 
-              day: '2-digit', 
-              month: 'short', 
-              year: 'numeric' 
+            {new Date(consulta.data_hora).toLocaleString('pt-BR', {
+              weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
             })}
           </div>
-          <div className="text-sm font-medium mt-1">{consulta.unidadeNome}</div>
+          <div className="text-sm font-medium mt-1">{consulta.local || 'Local não informado'}</div>
+          <div className="text-sm mt-1">Prioridade: {consulta.prioridade || 'Não definida'}</div>
+          <div className="text-sm mt-1">Profissional: {consulta.profissional_id ? consulta.profissional_id : 'A ser definido'}</div>
         </div>
-        
         <div className="flex items-center gap-2">
           {consulta.status === "pendente" && (
             <button
@@ -1039,7 +1067,6 @@ const ConsultaCard = ({ consulta, onCancel, loading }) => {
               Cancelar
             </button>
           )}
-          
           <button
             onClick={() => setExpanded(!expanded)}
             className="text-moyo-primary hover:text-moyo-secondary"
@@ -1067,39 +1094,14 @@ const ConsultaCard = ({ consulta, onCancel, loading }) => {
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
             }`}>
-              {consulta.status === "pendente" ? "Pendente" : 
-               consulta.status === "concluida" ? "Concluída" : "Cancelada"}
+              {consulta.status.charAt(0).toUpperCase() + consulta.status.slice(1)}
             </span>
-            
-            {consulta.nivelUrgencia && (
+            {consulta.prioridade && (
               <span className="ml-2 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                Urgência: {consulta.nivelUrgencia}
+                Prioridade: {consulta.prioridade}
               </span>
             )}
           </div>
-          
-          {consulta.triagem && (
-            <div className="mt-3">
-              <h4 className="font-medium text-gray-700 mb-1">Detalhes da Triagem:</h4>
-              <div className="text-sm text-gray-600">
-                {perguntasTriagem.map(p => {
-                  if (consulta.triagem?.[p.id]) {
-                    return (
-                      <div key={p.id} className="flex mt-1">
-                        <span className="font-medium w-32 flex-shrink-0">{p.texto}:</span>
-                        <span>
-                          {Array.isArray(consulta.triagem[p.id]) 
-                            ? (consulta.triagem[p.id]).join(", ")
-                            : consulta.triagem[p.id]}
-                        </span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -1116,14 +1118,14 @@ export default function ConsultasPaciente() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
   const [consultas, setConsultas] = useState<Consulta[]>([]);
-  const [filtroEsp, setFiltroEsp] = useState("");
-  const [filtroData, setFiltroData] = useState("");
+  const [filtroData, setFiltroData] = useState<string>("");
+  const [filtroPrioridade, setFiltroPrioridade] = useState<string>("");
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [unidadesFiltradas, setUnidadesFiltradas] = useState([]);
-  const [unidadeSelecionada, setUnidadeSelecionada] = useState(null);
-  const [mapCenter, setMapCenter] = useState([-8.8383, 13.2344]);
-  const [mapZoom, setMapZoom] = useState(12);
-  const [etapaAgendamento, setEtapaAgendamento] = useState(1);
+  const [unidadesFiltradas, setUnidadesFiltradas] = useState<HospitalUnit[]>([]);
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([-8.8383, 13.2344]);
+  const [mapZoom, setMapZoom] = useState<number>(12);
+  const [etapaAgendamento, setEtapaAgendamento] = useState<number>(1);
 
   // Obter consultas e localização ao carregar
   useEffect(() => {
@@ -1196,67 +1198,69 @@ export default function ConsultasPaciente() {
     }
   }, [unidadeSelecionada]);
 
+  // Definir unidadeSelecionadaObj corretamente antes do uso
+  const unidadeSelecionadaObj = unidadesHospitalares.find(u => u.id === unidadeSelecionada) || null;
+
   // Manipuladores de eventos
-  const handleSubmitAgendamento = (e) => {
+  const handleSubmitAgendamento = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErro("");
-
     if (!especialidade || !data || !unidadeSelecionada) {
       setErro("Preencha todos os campos.");
       return;
     }
-
     setShowTriagem(true);
   };
 
-  const handleSelecionarUnidade = (id) => {
+  const handleSelecionarUnidade = (id: string) => {
     setUnidadeSelecionada(id);
   };
 
-  const handleTriagemCompleta = (respostas, urgencia) => {
+  // Função para filtrar consultas por data e prioridade
+  const filtrarConsultas = (consultas: Consulta[], filtroData: string, filtroPrioridade: string) => {
+    return consultas.filter(c =>
+      (!filtroData || c.data_hora.startsWith(filtroData)) &&
+      (!filtroPrioridade || (c.prioridade || '').toLowerCase().includes(filtroPrioridade.toLowerCase()))
+    );
+  };
+
+  const handleTriagemCompleta = (
+    respostas: { [key: string]: string | string[] },
+    urgencia: { nivel: string; cor: string }
+  ) => {
     setLoading(true);
-
     setTimeout(() => {
-      const unidade = unidadesHospitalares.find(u => u.id === unidadeSelecionada);
-      
-      const novaConsulta = {
-        id: Date.now().toString(),
-        especialidade,
-        data,
-        status: "pendente",
-        triagem: respostas,
-        unidadeId: unidadeSelecionada,
-        unidadeNome: unidade?.nome || "",
-        nivelUrgencia: urgencia.nivel
-      };
-
-      const novasConsultas = [novaConsulta, ...consultas];
-      setConsultas(novasConsultas);
       const user = localStorage.getItem("moyo-user");
+      if (!user) return;
       const pacienteData = JSON.parse(user);
-      saveConsultaAPI(pacienteData.id,novasConsultas);
-
-      // Resetar estados
-      setAgendado(true);
-      setEspecialidade("");
-      setData("");
-      setUnidadeSelecionada(null);
-      setEtapaAgendamento(1);
-      setShowTriagem(false);
-      setLoading(false);
-
-      setTimeout(() => setAgendado(false), 3000);
+      // Montar consulta
+      const novaConsulta: Partial<Consulta> = {
+        data_hora: data ? (data.length === 10 ? data + 'T08:00:00' : data) : new Date().toISOString(),
+        status: 'agendada',
+        prioridade: urgencia.nivel,
+        local: unidadeSelecionada ? (unidadesHospitalares.find(u => u.id === unidadeSelecionada)?.nome || null) : null
+      };
+      saveConsultaAPI(Number(pacienteData.id), novaConsulta).then((consultaSalva) => {
+        if (consultaSalva) setConsultas([consultaSalva, ...consultas]);
+        setAgendado(true);
+        setEspecialidade("");
+        setData("");
+        setUnidadeSelecionada(null);
+        setEtapaAgendamento(1);
+        setShowTriagem(false);
+        setLoading(false);
+        setTimeout(() => setAgendado(false), 3000);
+      });
     }, 1500);
   };
 
-  const handleCancelarConsulta = (id) => {
+  const handleCancelarConsulta = (id: number) => {
     setLoading(true);
     setTimeout(() => {
       const novas = consultas.map(c =>
         c.id === id ? { ...c, status: "cancelada" } : c
       );
       setConsultas(novas);
-      saveConsultaAPI(pacienteData.id,novas);
       setLoading(false);
     }, 1000);
   };
@@ -1265,24 +1269,13 @@ export default function ConsultasPaciente() {
     setEtapaAgendamento(prev => Math.max(1, prev - 1));
   };
 
-  const handleContinuarEtapa = (etapa) => {
+  const handleContinuarEtapa = (etapa: number) => {
     setEtapaAgendamento(etapa);
   };
 
   // Filtrar consultas
-  const pendentes = consultas
-    .filter(c => c.status === "pendente")
-    .filter(c => 
-      (!filtroEsp || c.especialidade.includes(filtroEsp)) && 
-      (!filtroData || c.data === filtroData)
-    );
-
-  const historico = consultas
-    .filter(c => c.status !== "pendente")
-    .filter(c => 
-      (!filtroEsp || c.especialidade.includes(filtroEsp)) && 
-      (!filtroData || c.data === filtroData)
-    );
+  const pendentes = filtrarConsultas(consultas.filter(c => c.status === 'pendente'), filtroData, filtroPrioridade);
+  const historico = filtrarConsultas(consultas.filter(c => c.status !== 'pendente'), filtroData, filtroPrioridade);
 
   // Função para exibir perguntas e respostas coloridas
   function renderPerguntasRespostas(triagem: Record<string, string | string[]>) {
@@ -1306,9 +1299,6 @@ export default function ConsultasPaciente() {
     );
   }
 
-  const especialidadesDisponiveis = Array.from(new Set(consultas.map(c => c.especialidade)));
-  const unidadeSelecionadaObj = unidadesHospitalares.find(u => u.id === unidadeSelecionada);
-
   return (
     <div className="min-h-full w-full overflow-y-auto flex-col bg-gradient-to-br from-moyo-primary/10 to-moyo-secondary/10 animate-fadein">
       {/* Header */}
@@ -1326,16 +1316,6 @@ export default function ConsultasPaciente() {
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-3 mb-6 px-4 md:px-8 pt-6 animate-fadein">
-        <select 
-          className="border rounded-lg px-3 py-2 shadow focus:ring focus:ring-moyo-primary flex-grow min-w-[180px]"
-          value={filtroEsp} 
-          onChange={e => setFiltroEsp(e.target.value)}
-        >
-          <option value="">Todas Especialidades</option>
-          {especialidadesDisponiveis.map(esp => 
-            <option key={esp} value={esp}>{esp}</option>
-          )}
-        </select>
         
         <input 
           type="date" 
@@ -1344,9 +1324,20 @@ export default function ConsultasPaciente() {
           onChange={e => setFiltroData(e.target.value)} 
         />
         
+        <select 
+          className="border rounded-lg px-3 py-2 shadow focus:ring focus:ring-moyo-primary flex-grow min-w-[180px]"
+          value={filtroPrioridade} 
+          onChange={e => setFiltroPrioridade(e.target.value)}
+        >
+          <option value="">Todas as Prioridades</option>
+          <option value="alta">Alta</option>
+          <option value="media">Média</option>
+          <option value="baixa">Baixa</option>
+        </select>
+        
         <button 
           className="px-4 py-2 rounded bg-moyo-secondary text-white font-bold shadow hover:bg-moyo-primary transition flex items-center"
-          onClick={() => { setFiltroEsp(""); setFiltroData(""); }}
+          onClick={() => { setFiltroData(""); setFiltroPrioridade(""); }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1396,7 +1387,7 @@ export default function ConsultasPaciente() {
             onSubmit={handleSubmitAgendamento}
             loading={loading}
             erro={erro}
-            userLocation={userLocation}
+            userLocation={userLocation ?? undefined}
           />
         </div>
 
@@ -1406,10 +1397,10 @@ export default function ConsultasPaciente() {
           <MapaHospital
             mapCenter={mapCenter}
             mapZoom={mapZoom}
-            userLocation={userLocation}
+            userLocation={userLocation ?? undefined}
             unidadesFiltradas={unidadesFiltradas}
             onSelectUnidade={handleSelecionarUnidade}
-            unidadeSelecionada={unidadeSelecionada}
+            unidadeSelecionada={unidadeSelecionada || undefined}
           />
           
           {unidadeSelecionadaObj && (
