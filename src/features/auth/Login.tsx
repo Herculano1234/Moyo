@@ -156,7 +156,7 @@ export default function Login() {
         localStorage.setItem("moyo-auth", "true");
         localStorage.setItem("moyo-perfil", "admin");
         setLoading(false);
-        navigate("/admindasboard");
+  navigate("/admin");
       }, 1000);
       return;
     }

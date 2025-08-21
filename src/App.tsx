@@ -13,6 +13,7 @@ import LandingPage from "./features/LandingPage";
 import Signup from "./features/auth/Signup";
 import { Routes, Route, useLocation, Navigate, Outlet } from "react-router-dom";
 import PacienteDashboard from "./features/paciente/PacienteDashboard";
+import AdminDashboard from "./features/dashboard/AdminDashboard";
 
 function RequireAuth({ perfil }: { children?: React.ReactNode; perfil: string }) {
   const isAuth = localStorage.getItem("moyo-auth") === "true";
@@ -79,6 +80,7 @@ function App() {
           <Route index element={<PacienteDashboard />} />
         </Route>
       </Route>
+      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
 }
