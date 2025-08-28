@@ -1,4 +1,5 @@
 
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -33,7 +34,15 @@ async function initializeDatabase(pool) {
 
 // Executar a inicialização do banco de dados
 initializeDatabase(pool);
-
+// Listar hospitais
+app.get("/hospitais", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM hospitais ORDER BY id DESC");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar hospitais" });
+  }
+});
 // Listar consultas de um paciente específico
 app.get("/pacientes/:id/consultas", async (req, res) => {
   const { id } = req.params;
@@ -81,6 +90,15 @@ app.get("/", (req, res) => {
 app.get("/pacientes", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT id, nome, email, data_nascimento, sexo, telefone, endereco, bi, foto_perfil FROM pacientes");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar pacientes" });
+  }
+});
+// Listar pacientes
+app.get("/pacientesf", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT id, nome, email, data_nascimento, sexo, telefone, endereco, bi FROM pacientes");
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar pacientes" });
@@ -246,6 +264,47 @@ app.post("/profissionais", async (req, res) => {
 });
 // Cadastrar hospital ou clínica
 app.post("/hospitais", async (req, res) => {
+// Editar hospital ou clínica
+app.put("/hospitais/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    nome,
+    endereco,
+    cidade,
+    provincia,
+    latitude,
+    longitude,
+    areas_trabalho,
+    exames_disponiveis,
+    telefone,
+    email,
+    site
+  } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE hospitais SET nome=$1, endereco=$2, cidade=$3, provincia=$4, latitude=$5, longitude=$6, areas_trabalho=$7, exames_disponiveis=$8, telefone=$9, email=$10, site=$11 WHERE id=$12 RETURNING *`,
+      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Hospital não encontrado" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Erro ao editar hospital:", err);
+    res.status(500).json({ error: "Erro ao editar hospital", detalhes: err.message });
+  }
+});
+
+// Remover hospital ou clínica
+app.delete("/hospitais/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`DELETE FROM hospitais WHERE id = $1 RETURNING *`, [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Hospital não encontrado" });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erro ao remover hospital:", err);
+    res.status(500).json({ error: "Erro ao remover hospital", detalhes: err.message });
+  }
+});
   const {
     nome,
     endereco,
