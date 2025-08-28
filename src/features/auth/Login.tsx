@@ -41,7 +41,7 @@ const FloatingParticles = () => {
             width: `${Math.random() * 20 + 5}px`,
             height: `${Math.random() * 20 + 5}px`,
             borderRadius: '50%',
-            backgroundColor: i % 3 === 0 ? '#4F46E5' : i % 3 === 1 ? '#10B981' : '#EC4899',
+            backgroundColor: i % 3 === 0 ? '#DC2626' : i % 3 === 1 ? '#2563EB' : '#7E22CE',
             animation: `floatUp ${Math.random() * 10 + 10}s linear infinite`,
             animationDelay: `${Math.random() * 5}s`,
           }}
@@ -50,7 +50,7 @@ const FloatingParticles = () => {
       {[...Array(5)].map((_, i) => (
         <div 
           key={`heart-${i}`}
-          className="absolute bottom-0 text-pink-500 opacity-40"
+          className="absolute bottom-0 text-[#7E22CE] opacity-40"
           style={{
             left: `${Math.random() * 100}%`,
             fontSize: `${Math.random() * 20 + 15}px`,
@@ -156,7 +156,7 @@ export default function Login() {
         localStorage.setItem("moyo-auth", "true");
         localStorage.setItem("moyo-perfil", "admin");
         setLoading(false);
-  navigate("/admin");
+        navigate("/admin");
       }, 1000);
       return;
     }
@@ -199,7 +199,7 @@ export default function Login() {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-green-50 to-green-100 py-6 px-4 transition-all duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-blue-50 to-white py-6 px-4 transition-all duration-500 ${isMounted ? 'opacity-100' : 'opacity-0'}`}>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -248,7 +248,7 @@ export default function Login() {
         }
         
         .input-field:focus {
-          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
         
         @media (max-width: 1024px) {
@@ -262,6 +262,7 @@ export default function Login() {
           }
           .login-left {
             padding: 2rem 1.5rem;
+            background: linear-gradient(to right, #DC2626, #2563EB) !important;
           }
         }
         
@@ -280,7 +281,7 @@ export default function Login() {
       {/* Seletor de idioma */}
       <div className="absolute top-4 right-4 z-50">
         <select
-          className="border rounded-lg px-3 py-1.5 text-moyo-primary font-semibold shadow focus:ring focus:ring-moyo-primary transition-all duration-200 bg-white hover:bg-gray-50 cursor-pointer text-sm"
+          className="border rounded-lg px-3 py-1.5 text-[#DC2626] font-semibold shadow focus:ring focus:ring-[#DC2626] transition-all duration-200 bg-white hover:bg-gray-50 cursor-pointer text-sm"
           value={i18n.language}
           onChange={(e) => i18n.changeLanguage(e.target.value)}
         >
@@ -292,8 +293,8 @@ export default function Login() {
       
       <div className="login-container flex flex-col lg:flex-row w-full max-w-4xl bg-white rounded-2xl overflow-hidden transition-transform duration-300">
         {/* Lado esquerdo institucional */}
-        <div className="login-left flex-1 bg-gradient-to-br from-moyo-primary to-moyo-secondary text-white p-6 md:p-8 flex flex-col justify-center relative overflow-hidden min-h-[300px]">
-          <FloatingParticles />
+        <div className={`login-left flex-1 ${isMobile ? 'bg-gradient-to-r from-[#DC2626] to-[#2563EB]' : 'bg-gradient-to-br from-[#DC2626] via-[#7E22CE] to-[#2563EB]'} text-white p-6 md:p-8 flex flex-col justify-center relative overflow-hidden min-h-[300px]`}>
+          {!isMobile && <FloatingParticles />}
           
           <div className="absolute w-52 h-52 bg-white/10 rounded-full -top-10 -left-10 z-0 floating" />
           <div className="absolute w-36 h-36 bg-white/10 rounded-full bottom-[-20px] right-16 z-0 floating" style={{ animationDelay: "1.5s" }} />
@@ -339,15 +340,15 @@ export default function Login() {
         <div className="login-right flex-1 p-6 md:p-8 flex flex-col justify-center bg-white">
           {isMobile && (
             <div className="flex items-center justify-center mb-6 animate-fadeIn">
-              <span className="text-4xl mr-3 transform transition-all duration-700 hover:rotate-12 text-moyo-primary">
+              <span className="text-4xl mr-3 transform transition-all duration-700 hover:rotate-12 text-[#DC2626]">
                 <i className="fas fa-heartbeat pulsing"></i>
               </span>
-              <span className="text-3xl font-extrabold text-moyo-primary">Moyo</span>
+              <span className="text-3xl font-extrabold text-[#2563EB]">Moyo</span>
             </div>
           )}
           
           <div className="flex justify-end mb-4">
-            <a href="/" className="flex items-center gap-2 text-moyo-primary font-medium hover:text-moyo-secondary transition-all duration-300 group text-sm">
+            <a href="/" className="flex items-center gap-2 text-[#2563EB] font-medium hover:text-[#DC2626] transition-all duration-300 group text-sm">
               <i className="fas fa-arrow-left transition-transform duration-300 group-hover:-translate-x-1 text-xs"></i> 
               {t('voltarPaginaInicial') || "Voltar à página inicial"}
             </a>
@@ -369,8 +370,8 @@ export default function Login() {
               type="button"
               className={`perfil-btn px-4 py-2.5 rounded-lg font-semibold border-2 transition-all flex-1 min-w-[120px] flex items-center justify-center text-sm ${
                 perfil === "paciente" 
-                  ? "bg-moyo-primary text-white border-moyo-primary" 
-                  : "bg-white text-moyo-primary border-moyo-primary/30 hover:border-moyo-primary"
+                  ? "bg-[#DC2626] text-white border-[#DC2626]" 
+                  : "bg-white text-[#DC2626] border-[#DC2626]/30 hover:border-[#DC2626]"
               }`}
               onClick={() => setPerfil("paciente")}
             >
@@ -381,8 +382,8 @@ export default function Login() {
               type="button"
               className={`perfil-btn px-4 py-2.5 rounded-lg font-semibold border-2 transition-all flex-1 min-w-[120px] flex items-center justify-center text-sm ${
                 perfil === "profissional" 
-                  ? "bg-moyo-primary text-white border-moyo-primary" 
-                  : "bg-white text-moyo-primary border-moyo-primary/30 hover:border-moyo-primary"
+                  ? "bg-[#2563EB] text-white border-[#2563EB]" 
+                  : "bg-white text-[#2563EB] border-[#2563EB]/30 hover:border-[#2563EB]"
               }`}
               onClick={() => setPerfil("profissional")}
             >
@@ -396,7 +397,7 @@ export default function Login() {
               <input
                 type="email"
                 id="email"
-                className="input-field w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-moyo-primary focus:ring-0 outline-none bg-gray-50 transition-all duration-300"
+                className="input-field w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:ring-0 outline-none bg-gray-50 transition-all duration-300"
                 placeholder={t('loginEmail') || "E-mail"}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -409,7 +410,7 @@ export default function Login() {
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
-                className="input-field w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-moyo-primary focus:ring-0 outline-none bg-gray-50 transition-all duration-300"
+                className="input-field w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:ring-0 outline-none bg-gray-50 transition-all duration-300"
                 placeholder={t('loginSenha') || "Senha"}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -418,7 +419,7 @@ export default function Login() {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-moyo-primary focus:outline-none transition-colors duration-300 text-sm"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#2563EB] focus:outline-none transition-colors duration-300 text-sm"
                 tabIndex={-1}
                 onClick={() => setShowPassword(v => !v)}
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
@@ -432,18 +433,18 @@ export default function Login() {
                 <input 
                   type="checkbox" 
                   id="remember" 
-                  className="accent-moyo-primary w-3.5 h-3.5 cursor-pointer rounded focus:ring-moyo-primary" 
+                  className="accent-[#DC2626] w-3.5 h-3.5 cursor-pointer rounded focus:ring-[#DC2626]" 
                 />
                 <label htmlFor="remember" className="cursor-pointer select-none">{t('loginLembrarMe') || "Lembrar-me"}</label>
               </div>
-              <a href="#" className="text-moyo-primary hover:underline font-medium transition-colors duration-300 text-xs">
+              <a href="#" className="text-[#2563EB] hover:underline font-medium transition-colors duration-300 text-xs">
                 {t('loginEsqueceuSenha') || "Esqueceu a senha?"}
               </a>
             </div>
             
             <button 
               type="submit" 
-              className="login-button bg-moyo-primary text-white py-2.5 rounded-lg font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 hover:bg-moyo-primary/90 hover:shadow disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              className="login-button bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white py-2.5 rounded-lg font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 hover:opacity-90 hover:shadow disabled:opacity-70 disabled:cursor-not-allowed mt-2"
               disabled={loading}
             >
               {loading ? (
@@ -483,7 +484,7 @@ export default function Login() {
               <i className="fab fa-facebook-f"></i>
             </button>
             <button 
-              className="social-btn w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-700 text-base border border-gray-200 hover:bg-gray-800 hover:text-white transition-all duration-300"
+              className="social-btn w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-700 text-base border border-gray-200 hover:bg-black hover:text-white transition-all duration-300"
               title="Entrar com Apple"
             >
               <i className="fab fa-apple"></i>
@@ -492,7 +493,7 @@ export default function Login() {
           
           <div className="signup-link text-center text-gray-500 text-xs animate-fadeIn" style={{ animationDelay: "1.2s" }}>
             {t('loginNaoTemConta') || "Não tem uma conta?"}{' '}
-            <a href="/signup" className="text-moyo-primary font-semibold hover:underline transition-colors duration-300">
+            <a href="/signup" className="text-[#7E22CE] font-semibold hover:underline transition-colors duration-300">
               {t('loginCadastrarAgora') || "Cadastre-se agora"}
             </a>
           </div>

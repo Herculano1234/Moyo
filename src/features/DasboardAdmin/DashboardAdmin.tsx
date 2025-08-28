@@ -1,10 +1,4 @@
-import React from 'react';
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -12,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-const AdminDashboard = () => {
+const DashboardAdmin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeHospitalTab, setActiveHospitalTab] = useState("list");
@@ -406,4 +400,3 @@ const DashboardAdmin = ({ stats }: { stats: any[] }) => (
            
 );
 
-export default DashboardAdmin;
