@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -218,185 +217,189 @@ const DashboardAdmin = () => {
     activeUserTab === "professionals" ? ["Médico", "Enfermeiro"].includes(user.type) :
     activeUserTab === "admins" ? user.type === "Administrador" : true
   );
-const DashboardAdmin = ({ stats }: { stats: any[] }) => (
-  <div className="animate-fadeIn">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Dashboard</h1>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
-                  <i className="fas fa-sync-alt mr-2"></i> Atualizar
-                </button>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                {stats.map((stat, index) => (
-                  <div 
-                    key={index} 
-                    className={`bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow ${
-                      stat.pulse ? 'animate-pulse' : ''
-                    }`}
-                  >
-                    <h3 className="text-gray-500 text-sm font-medium">{stat.title}</h3>
-                    <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">{stat.value}</p>
-                    <div className={`flex items-center mt-3 ${
-                      stat.trend === 'up' ? 'text-green-500' : 'text-red-500'
-                    }`}>
-                      <i className={`fas ${stat.trend === 'up' ? 'fa-arrow-up' : 'fa-arrow-down'} mr-1`}></i>
-                      <span className="text-sm font-medium">{stat.trendValue}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+  return (
+    <div className="animate-fadeIn">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Dashboard</h1>
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+          <i className="fas fa-sync-alt mr-2"></i> Atualizar
+        </button>
+      </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h2 className="text-xl font-semibold text-gray-700 mb-4">Atividade Recente</h2>
-                  <div className="h-64 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex flex-col items-center justify-center text-blue-800">
-                    <i className="fas fa-chart-bar text-5xl mb-4"></i>
-                    <p className="text-xl font-bold">Visitas por Dia da Semana</p>
-                    <div className="w-full max-w-xs mt-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Segunda</span>
-                        <div className="w-3/4 h-4 bg-blue-200 rounded-full">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: '75%' }}></div>
-                        </div>
-                        <span className="text-sm font-bold">75%</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Terça</span>
-                        <div className="w-3/4 h-4 bg-blue-200 rounded-full">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: '85%' }}></div>
-                        </div>
-                        <span className="text-sm font-bold">85%</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Quarta</span>
-                        <div className="w-3/4 h-4 bg-blue-200 rounded-full">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: '60%' }}></div>
-                        </div>
-                        <span className="text-sm font-bold">60%</span>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Quinta</span>
-                        <div className="w-3/4 h-4 bg-blue-200 rounded-full">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: '90%' }}></div>
-                        </div>
-                        <span className="text-sm font-bold">90%</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Sexta</span>
-                        <div className="w-3/4 h-4 bg-blue-200 rounded-full">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: '70%' }}></div>
-                        </div>
-                        <span className="text-sm font-bold">70%</span>
-                      </div>
-                    </div>
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => (
+          <div 
+            key={index} 
+            className={`bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow ${
+              stat.pulse ? 'animate-pulse' : ''
+            }`}
+          >
+            <h3 className="text-gray-500 text-sm font-medium">{stat.title}</h3>
+            <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">{stat.value}</p>
+            <div className={`flex items-center mt-3 ${
+              stat.trend === 'up' ? 'text-green-500' : 'text-red-500'
+            }`}>
+              <i className={`fas ${stat.trend === 'up' ? 'fa-arrow-up' : 'fa-arrow-down'} mr-1`}></i>
+              <span className="text-sm font-medium">{stat.trendValue}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">Atividade Recente</h2>
+          <div className="h-64 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex flex-col items-center justify-center text-blue-800">
+            <i className="fas fa-chart-bar text-5xl mb-4"></i>
+            <p className="text-xl font-bold">Visitas por Dia da Semana</p>
+            <div className="w-full max-w-xs mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Segunda</span>
+                <div className="w-3/4 h-4 bg-blue-200 rounded-full">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '75%' }}></div>
                 </div>
-                
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h2 className="text-xl font-semibold text-gray-700 mb-4">Distribuição de Pacientes</h2>
-                  <div className="h-64 bg-gradient-to-br from-green-50 to-green-100 rounded-lg flex items-center justify-center text-green-800">
-                    <div className="text-center">
-                      <i className="fas fa-pie-chart text-5xl mb-4"></i>
-                      <p className="text-xl font-bold">Distribuição por Especialidade</p>
-                      <div className="mt-6 grid grid-cols-2 gap-4">
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-                          <span>Cardiologia (25%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                          <span>Pediatria (20%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-purple-500 rounded mr-2"></div>
-                          <span>Ortopedia (18%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
-                          <span>Oncologia (15%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
-                          <span>Neurologia (12%)</span>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-4 h-4 bg-gray-500 rounded mr-2"></div>
-                          <span>Outros (10%)</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <span className="text-sm font-bold">75%</span>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Terça</span>
+                <div className="w-3/4 h-4 bg-blue-200 rounded-full">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '85%' }}></div>
+                </div>
+                <span className="text-sm font-bold">85%</span>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Quarta</span>
+                <div className="w-3/4 h-4 bg-blue-200 rounded-full">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '60%' }}></div>
+                </div>
+                <span className="text-sm font-bold">60%</span>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Quinta</span>
+                <div className="w-3/4 h-4 bg-blue-200 rounded-full">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '90%' }}></div>
+                </div>
+                <span className="text-sm font-bold">90%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Sexta</span>
+                <div className="w-3/4 h-4 bg-blue-200 rounded-full">
+                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '70%' }}></div>
+                </div>
+                <span className="text-sm font-bold">70%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">Distribuição de Pacientes</h2>
+          <div className="h-64 bg-gradient-to-br from-green-50 to-green-100 rounded-lg flex items-center justify-center text-green-800">
+            <div className="text-center">
+              <i className="fas fa-pie-chart text-5xl mb-4"></i>
+              <p className="text-xl font-bold">Distribuição por Especialidade</p>
+              <div className="mt-6 grid grid-cols-2 gap-4">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                  <span>Cardiologia (25%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                  <span>Pediatria (20%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+                  <span>Ortopedia (18%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                  <span>Oncologia (15%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                  <span>Neurologia (12%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-gray-500 rounded mr-2"></div>
+                  <span>Outros (10%)</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className="flex border-b">
-                  <button className="px-6 py-4 font-medium text-blue-600 border-b-2 border-blue-600">
-                    Alertas Recentes
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="flex border-b">
+          <button className="px-6 py-4 font-medium text-blue-600 border-b-2 border-blue-600">
+            Alertas Recentes
+          </button>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mensagem</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridade</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              <tr className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap">15/08/2025</td>
+                <td className="px-6 py-4">Atualização do sistema agendada para amanhã</td>
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    Média
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <button className="text-blue-500 hover:text-blue-700 mr-3">
+                    <i className="fas fa-eye"></i>
                   </button>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mensagem</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridade</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">15/08/2025</td>
-                        <td className="px-6 py-4">Atualização do sistema agendada para amanhã</td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                            Média
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button className="text-blue-500 hover:text-blue-700 mr-3">
-                            <i className="fas fa-eye"></i>
-                          </button>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">14/08/2025</td>
-                        <td className="px-6 py-4">Novo hospital cadastrado: Hospital Santa Luzia</td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Baixa
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button className="text-blue-500 hover:text-blue-700 mr-3">
-                            <i className="fas fa-eye"></i>
-                          </button>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">13/08/2025</td>
-                        <td className="px-6 py-4">Servidor de banco de dados apresentando alta carga</td>
-                        <td className="px-6 py-4">
-                          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                            Alta
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button className="text-blue-500 hover:text-blue-700 mr-3">
-                            <i className="fas fa-eye"></i>
-                          </button>
-                          <button className="text-gray-500 hover:text-gray-700">
-                            <i className="fas fa-cog"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-           
-);
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap">14/08/2025</td>
+                <td className="px-6 py-4">Novo hospital cadastrado: Hospital Santa Luzia</td>
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    Baixa
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <button className="text-blue-500 hover:text-blue-700 mr-3">
+                    <i className="fas fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap">13/08/2025</td>
+                <td className="px-6 py-4">Servidor de banco de dados apresentando alta carga</td>
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    Alta
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <button className="text-blue-500 hover:text-blue-700 mr-3">
+                    <i className="fas fa-eye"></i>
+                  </button>
+                  <button className="text-gray-500 hover:text-gray-700">
+                    <i className="fas fa-cog"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default DashboardAdmin;
 

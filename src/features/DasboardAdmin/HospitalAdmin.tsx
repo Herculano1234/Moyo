@@ -1,7 +1,117 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 
-const HospitalAdmin = ({ hospitals, searchTerm, setSearchTerm, onEdit, onDelete }: any) => (
-  <div className="animate-fadeIn">
+// Dummy icon for Marker (replace with your own if needed)
+const markerIcon = undefined;
+
+// Dummy LocationPicker (replace with your own if needed)
+const LocationPicker = ({ onSelect }: { onSelect: (lat: number, lng: number) => void }) => null;
+
+interface Hospital {
+  id: number;
+  nome?: string;
+  name?: string;
+  endereco?: string;
+  address?: string;
+  capacidade?: number;
+  capacity?: number;
+  areas_trabalho?: string;
+  specialties?: string;
+  responsavel?: string;
+  manager?: string;
+  status?: string;
+  latitude?: string;
+  longitude?: string;
+}
+
+const initialForm = {
+  nome: '', endereco: '', cidade: '', provincia: '', latitude: '', longitude: '',
+  areas_trabalho: '', exames_disponiveis: '', telefone: '', email: '', site: ''
+};
+
+const HospitalAdmin: React.FC = () => {
+  // Dummy hospitals data (replace with real fetch if needed)
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showHospitalModal, setShowHospitalModal] = useState(false);
+  const [editHospital, setEditHospital] = useState<Hospital | null>(null);
+  const [hospitalForm, setHospitalForm] = useState(initialForm);
+  const [errorHosp, setErrorHosp] = useState<string | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapSearch, setMapSearch] = useState('');
+  const [mapSearchLoading, setMapSearchLoading] = useState(false);
+  const [mapSearchResults, setMapSearchResults] = useState<any[]>([]);
+  const [mapPickerCenter, setMapPickerCenter] = useState<[number, number]>([-8.839, 13.289]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [hospitalToDelete, setHospitalToDelete] = useState<Hospital | null>(null);
+  const [activeHospitalTab, setActiveHospitalTab] = useState<'list' | 'map' | 'indicators'>('list');
+
+  // Filtered hospitals
+  const filteredHospitals = hospitals.filter(h => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (h.nome || h.name || '').toLowerCase().includes(term) ||
+      (h.endereco || h.address || '').toLowerCase().includes(term) ||
+      (h.responsavel || h.manager || '').toLowerCase().includes(term)
+    );
+  });
+
+  // Handlers
+  const handleHospitalInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHospitalForm({ ...hospitalForm, [e.target.name]: e.target.value });
+  };
+  const handleHospitalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorHosp(null);
+    // Dummy add
+    setHospitals([...hospitals, { ...hospitalForm, id: Date.now() } as Hospital]);
+    setShowHospitalModal(false);
+    setHospitalForm(initialForm);
+  };
+  const handleEditHospitalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorHosp(null);
+    if (!editHospital) return;
+    setHospitals(hospitals.map(h => h.id === editHospital.id ? { ...editHospital, ...hospitalForm } : h));
+    setShowHospitalModal(false);
+    setEditHospital(null);
+    setHospitalForm(initialForm);
+  };
+  const openEditHospital = (hospital: Hospital) => {
+    setEditHospital(hospital);
+    setHospitalForm({
+      nome: hospital.nome || hospital.name || '',
+      endereco: hospital.endereco || hospital.address || '',
+      cidade: '', provincia: '', latitude: hospital.latitude || '', longitude: hospital.longitude || '',
+      areas_trabalho: hospital.areas_trabalho || hospital.specialties || '', exames_disponiveis: '', telefone: '', email: '', site: ''
+    });
+    setShowHospitalModal(true);
+  };
+  const openDeleteHospital = (hospital: Hospital) => {
+    setHospitalToDelete(hospital);
+    setShowDeleteModal(true);
+  };
+  const handleDeleteHospital = () => {
+    if (hospitalToDelete) {
+      setHospitals(hospitals.filter(h => h.id !== hospitalToDelete.id));
+      setShowDeleteModal(false);
+      setHospitalToDelete(null);
+    }
+  };
+  const handleMapSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setMapSearchLoading(true);
+    // Dummy search
+    setTimeout(() => {
+      setMapSearchResults([
+        { lat: '-8.839', lon: '13.289', display_name: 'Luanda, Angola' }
+      ]);
+      setMapSearchLoading(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="animate-fadeIn">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Gestão de Hospitais</h1>
                 <div className="flex flex-wrap gap-3">
@@ -335,6 +445,7 @@ const HospitalAdmin = ({ hospitals, searchTerm, setSearchTerm, onEdit, onDelete 
                 </div>
               </div>
             </div>
-);
+  );
+};
 
 export default HospitalAdmin;
