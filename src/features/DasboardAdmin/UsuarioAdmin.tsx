@@ -1,7 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
-const UsuarioAdmin = ({ users, activeUserTab, setActiveUserTab, searchTerm, setSearchTerm }: any) => (
-  <div className="animate-fadeIn">
+// WebSocket para atualização em tempo real
+const WS_URL = 'ws://localhost:3001'; // ajuste para sua URL real
+
+interface User {
+  id: string;
+  name: string;
+  type: string;
+  cpf: string;
+  email: string;
+  lastAccess: string;
+  status: string;
+}
+
+
+const UsuarioAdmin: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [activeUserTab, setActiveUserTab] = useState<'patients' | 'professionals' | 'admins'>('patients');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Buscar usuários do backend
+  // WebSocket para usuários
+  const ws = useRef<WebSocket | null>(null);
+  useEffect(() => {
+    setLoadingUsers(true);
+    // Fetch inicial
+    axios.get('/usuarios').then(res => setUsers(res.data)).catch(() => setUsers([])).finally(() => setLoadingUsers(false));
+    // WebSocket
+    ws.current = new window.WebSocket(WS_URL + '/usuarios');
+    ws.current.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (Array.isArray(data)) setUsers(data);
+      } catch {}
+    };
+    return () => { ws.current?.close(); };
+  }, []);
+
+  // Filtro de usuários por aba e busca
+  const filteredUsers = users.filter(user => {
+    if (activeUserTab === 'patients' && user.type !== 'Paciente') return false;
+    if (activeUserTab === 'professionals' && user.type !== 'Profissional') return false;
+    if (activeUserTab === 'admins' && user.type !== 'Administrador') return false;
+    return (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.cpf.includes(searchTerm)
+    );
+  });
+
+  return (
+    <div className="animate-fadeIn">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Gestão de Usuários</h1>
                 <div className="flex space-x-3">
@@ -138,6 +188,7 @@ const UsuarioAdmin = ({ users, activeUserTab, setActiveUserTab, searchTerm, setS
                 </div>
               </div>
             </div>
-);
+  );
+};
 
 export default UsuarioAdmin;

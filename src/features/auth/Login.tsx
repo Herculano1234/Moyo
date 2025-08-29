@@ -5,7 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-// Configuração do Firebase (substitua com suas credenciais)
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDJARbQHXV9eGtl1ftJkeoEk-t04ZNGmK4",
   authDomain: "moyo-63267.firebaseapp.com",
@@ -224,24 +224,39 @@ export default function Login() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
         }
+        @keyframes shine {
+          0% { transform: translateX(-100%) rotate(30deg); }
+          100% { transform: translateX(200%) rotate(30deg); }
+        }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out forwards; }
         .animate-shake { animation: shake 0.4s ease-in-out; }
         .floating { animation: float 3s ease-in-out infinite; }
         .pulsing { animation: pulse 2s ease-in-out infinite; }
         
         .login-container {
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -5px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
           transition: all 0.3s ease;
           max-height: 90vh;
+          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.85);
+        }
+        
+        .glass-effect {
+          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.85);
+        }
+        
+        .gradient-bg {
+          background: linear-gradient(135deg, #DC2626 0%, #7E22CE 50%, #2563EB 100%);
         }
         
         .social-btn:hover {
           transform: translateY(-3px);
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         
         .perfil-btn {
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
         }
         .perfil-btn:hover {
           transform: scale(1.03);
@@ -249,6 +264,36 @@ export default function Login() {
         
         .input-field:focus {
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        .shine-effect {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .shine-effect::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: linear-gradient(
+            to bottom right,
+            rgba(255, 255, 255, 0.2),
+            rgba(255, 255, 255, 0.1) 20%,
+            rgba(255, 255, 255, 0) 40%,
+            rgba(255, 255, 255, 0.1) 60%,
+            rgba(255, 255, 255, 0.2)
+          );
+          transform: rotate(30deg);
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        
+        .shine-effect:hover::after {
+          opacity: 1;
+          animation: shine 1.5s ease-out;
         }
         
         @media (max-width: 1024px) {
@@ -291,58 +336,66 @@ export default function Login() {
         </select>
       </div>
       
-      <div className="login-container flex flex-col lg:flex-row w-full max-w-4xl bg-white rounded-2xl overflow-hidden transition-transform duration-300">
+      <div className="login-container flex flex-col lg:flex-row w-full max-w-6xl bg-white rounded-2xl overflow-hidden transition-transform duration-300 glass-effect">
+        
         {/* Lado esquerdo institucional */}
-        <div className={`login-left flex-1 ${isMobile ? 'bg-gradient-to-r from-[#DC2626] to-[#2563EB]' : 'bg-gradient-to-br from-[#DC2626] via-[#7E22CE] to-[#2563EB]'} text-white p-6 md:p-8 flex flex-col justify-center relative overflow-hidden min-h-[300px]`}>
+        {!isMobile && (<div className={`login-left flex-1 ${isMobile ? 'bg-gradient-to-r from-[#DC2626] to-[#2563EB]' : 'gradient-bg'} text-white p-8 lg:p-10 flex flex-col justify-center relative overflow-hidden min-h-[300px]`}>
           {!isMobile && <FloatingParticles />}
           
           <div className="absolute w-52 h-52 bg-white/10 rounded-full -top-10 -left-10 z-0 floating" />
           <div className="absolute w-36 h-36 bg-white/10 rounded-full bottom-[-20px] right-16 z-0 floating" style={{ animationDelay: "1.5s" }} />
           
           <div className="relative z-10">
-            <div className="flex items-center mb-6 animate-fadeIn">
-              <span className="text-4xl mr-3 transform transition-all duration-700 hover:rotate-12">
-                <i className="fas fa-heartbeat pulsing"></i>
-              </span>
+            <div className="flex items-center mb-8 animate-fadeIn">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mr-3 shadow-lg">
+                <i className="fas fa-heartbeat text-2xl text-[#DC2626] pulsing"></i>
+              </div>
               <span className="text-3xl font-extrabold">Moyo</span>
             </div>
             
-            {!isMobile && (
+            
               <>
-                <h1 className="text-2xl md:text-3xl font-bold mb-4 animate-fadeIn" style={{ animationDelay: "0.2s" }}>
+                <h1 className="text-2xl md:text-3xl font-bold mb-6 animate-fadeIn" style={{ animationDelay: "0.2s" }}>
                   {t('loginBemVindo') || "Bem-vindo ao Moyo"}
                 </h1>
                 
-                <p className="text-base md:text-lg mb-6 opacity-90 max-w-md animate-fadeIn" style={{ animationDelay: "0.4s" }}>
+                <p className="text-base md:text-lg mb-8 opacity-90 max-w-md animate-fadeIn" style={{ animationDelay: "0.4s" }}>
                   {t('loginMensagem') || "Sua plataforma de saúde completa e integrada"}
                 </p>
                 
                 <div className="flex flex-col gap-4 mt-4 animate-fadeIn" style={{ animationDelay: "0.6s" }}>
                   <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1">
-                    <i className="fas fa-shield-alt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm">
+                      <i className="fas fa-shield-alt"></i>
+                    </div>
                     <span className="text-sm md:text-base">{t('loginSeguroCriptografia') || "Segurança com criptografia avançada"}</span>
                   </div>
                   <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1" style={{ transitionDelay: "0.1s" }}>
-                    <i className="fas fa-bolt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm">
+                      <i className="fas fa-bolt"></i>
+                    </div>
                     <span className="text-sm md:text-base">{t('loginTriagemIA') || "Triagem inteligente com IA"}</span>
                   </div>
                   <div className="flex items-center gap-3 transition-transform duration-300 hover:translate-x-1" style={{ transitionDelay: "0.2s" }}>
-                    <i className="fas fa-mobile-alt bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm"></i>
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm">
+                      <i className="fas fa-mobile-alt"></i>
+                    </div>
                     <span className="text-sm md:text-base">{t('loginAcessoDispositivo') || "Acesso em qualquer dispositivo"}</span>
                   </div>
                 </div>
               </>
-            )}
+            
           </div>
         </div>
+        )}
 
         {/* Lado direito: formulário */}
-        <div className="login-right flex-1 p-6 md:p-8 flex flex-col justify-center bg-white">
+        <div className="login-right flex-1 p-8 lg:p-12 flex flex-col justify-center bg-transparent">
           {isMobile && (
             <div className="flex items-center justify-center mb-6 animate-fadeIn">
-              <span className="text-4xl mr-3 transform transition-all duration-700 hover:rotate-12 text-[#DC2626]">
-                <i className="fas fa-heartbeat pulsing"></i>
-              </span>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#DC2626] to-[#2563EB] flex items-center justify-center mr-3 shadow-lg">
+                <i className="fas fa-heartbeat text-2xl text-white pulsing"></i>
+              </div>
               <span className="text-3xl font-extrabold text-[#2563EB]">Moyo</span>
             </div>
           )}
@@ -354,50 +407,52 @@ export default function Login() {
             </a>
           </div>
           
-          <div className="text-center mb-6 animate-fadeIn" style={{ animationDelay: "0.2s" }}>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">{t('loginAcesseConta') || "Acesse sua conta"}</h1>
-            <p className="text-gray-500 text-xs md:text-sm">{t('loginInsiraCredenciais') || "Insira suas credenciais para continuar"}</p>
+          <div className="text-center mb-8 animate-fadeIn" style={{ animationDelay: "0.2s" }}>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{t('loginAcesseConta') || "Acesse sua conta"}</h1>
+            <p className="text-gray-600 text-sm">{t('loginInsiraCredenciais') || "Insira suas credenciais para continuar"}</p>
           </div>
           
           {error && (
-            <div className="mb-3 p-2 rounded-lg bg-red-50 text-red-600 text-center animate-shake border border-red-100 text-sm">
+            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-center animate-shake border border-red-100 text-sm">
               {error}
             </div>
           )}
           
-          <div className="mb-4 flex flex-wrap gap-2 justify-center animate-fadeIn" style={{ animationDelay: "0.4s" }}>
+          <div className="mb-6 flex flex-wrap gap-3 justify-center animate-fadeIn" style={{ animationDelay: "0.4s" }}>
             <button
               type="button"
-              className={`perfil-btn px-4 py-2.5 rounded-lg font-semibold border-2 transition-all flex-1 min-w-[120px] flex items-center justify-center text-sm ${
+              className={`perfil-btn px-4 py-3 rounded-xl font-semibold border-2 transition-all flex-1 min-w-[120px] flex items-center justify-center text-sm ${
                 perfil === "paciente" 
-                  ? "bg-[#DC2626] text-white border-[#DC2626]" 
-                  : "bg-white text-[#DC2626] border-[#DC2626]/30 hover:border-[#DC2626]"
+                  ? "bg-[#2563EB] text-white border-[#2563EB] shadow-md" 
+                  : "bg-white text-[#2563EB] border-[#2563EB] hover:bg-[#2563EB] hover:text-white"
               }`}
               onClick={() => setPerfil("paciente")}
             >
-              <i className="fas fa-user-injured mr-1.5 text-sm"></i> {t('loginPaciente') || "Paciente"}
+              <i className="fas fa-user-injured mr-2 text-sm"></i> {t('loginPaciente') || "Paciente"}
             </button>
             
             <button
               type="button"
-              className={`perfil-btn px-4 py-2.5 rounded-lg font-semibold border-2 transition-all flex-1 min-w-[120px] flex items-center justify-center text-sm ${
+              className={`perfil-btn px-4 py-3 rounded-xl font-semibold border-2 transition-all flex-1 min-w-[120px] flex items-center justify-center text-sm ${
                 perfil === "profissional" 
-                  ? "bg-[#2563EB] text-white border-[#2563EB]" 
-                  : "bg-white text-[#2563EB] border-[#2563EB]/30 hover:border-[#2563EB]"
+                  ? "bg-[#DC2626] text-white border-[#DC2626] shadow-md" 
+                  : "bg-white text-[#DC2626] border-[#DC2626] hover:bg-[#DC2626] hover:text-white"
               }`}
               onClick={() => setPerfil("profissional")}
             >
-              <i className="fas fa-user-md mr-1.5 text-sm"></i> {t('loginProfissional') || "Profissional"}
+              <i className="fas fa-user-md mr-2 text-sm"></i> {t('loginProfissional') || "Profissional"}
             </button>
           </div>
           
-          <form className="login-form flex flex-col gap-4 animate-fadeIn" style={{ animationDelay: "0.6s" }} onSubmit={handleSubmit} autoComplete="off">
+          <form className="login-form flex flex-col gap-5 animate-fadeIn" style={{ animationDelay: "0.6s" }} onSubmit={handleSubmit} autoComplete="off">
             <div className="form-group relative">
-              <i className="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i className="fas fa-envelope text-gray-400 text-sm"></i>
+              </div>
               <input
                 type="email"
                 id="email"
-                className="input-field w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:ring-0 outline-none bg-gray-50 transition-all duration-300"
+                className="input-field w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl text-sm focus:border-[#2563EB] focus:ring-0 outline-none bg-white/70 transition-all duration-300"
                 placeholder={t('loginEmail') || "E-mail"}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -406,11 +461,13 @@ export default function Login() {
             </div>
             
             <div className="form-group relative">
-              <i className="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i className="fas fa-lock text-gray-400 text-sm"></i>
+              </div>
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
-                className="input-field w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-[#2563EB] focus:ring-0 outline-none bg-gray-50 transition-all duration-300"
+                className="input-field w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl text-sm focus:border-[#2563EB] focus:ring-0 outline-none bg-white/70 transition-all duration-300"
                 placeholder={t('loginSenha') || "Senha"}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -428,23 +485,23 @@ export default function Login() {
               </button>
             </div>
             
-            <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-600 gap-2">
               <div className="flex items-center gap-1.5">
                 <input 
                   type="checkbox" 
                   id="remember" 
-                  className="accent-[#DC2626] w-3.5 h-3.5 cursor-pointer rounded focus:ring-[#DC2626]" 
+                  className="accent-[#DC2626] w-4 h-4 cursor-pointer rounded focus:ring-[#DC2626]" 
                 />
                 <label htmlFor="remember" className="cursor-pointer select-none">{t('loginLembrarMe') || "Lembrar-me"}</label>
               </div>
-              <a href="#" className="text-[#2563EB] hover:underline font-medium transition-colors duration-300 text-xs">
+              <a href="#" className="text-[#2563EB] hover:text-[#7E22CE] hover:underline font-medium transition-colors duration-300 text-xs">
                 {t('loginEsqueceuSenha') || "Esqueceu a senha?"}
               </a>
             </div>
             
             <button 
               type="submit" 
-              className="login-button bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white py-2.5 rounded-lg font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 hover:opacity-90 hover:shadow disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              className="login-button bg-gradient-to-r from-[#DC2626] to-[#2563EB] text-white py-3 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed mt-2 shine-effect"
               disabled={loading}
             >
               {loading ? (
@@ -461,16 +518,16 @@ export default function Login() {
             </button>
           </form>
           
-          <div className="divider flex items-center my-4 text-gray-400 animate-fadeIn" style={{ animationDelay: "0.8s" }}>
-            <div className="flex-1 h-px bg-gray-200" />
+          <div className="divider flex items-center my-6 text-gray-400 animate-fadeIn" style={{ animationDelay: "0.8s" }}>
+            <div className="flex-1 h-px bg-gray-300" />
             <span className="px-3 text-xs">{t('loginOuEntrarCom') || "Ou entre com"}</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-gray-300" />
           </div>
           
-          <div className="social-login flex justify-center gap-3 mb-4 animate-fadeIn" style={{ animationDelay: "1s" }}>
+          <div className="social-login flex justify-center gap-4 mb-6 animate-fadeIn" style={{ animationDelay: "1s" }}>
             <button
               type="button"
-              className="social-btn w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-700 text-base border border-gray-200 hover:bg-red-50 hover:text-red-600 transition-all duration-300"
+              className="social-btn w-12 h-12 rounded-xl flex items-center justify-center bg-white text-gray-700 text-base border border-gray-300 hover:bg-red-50 hover:text-red-600 transition-all duration-300 shadow-sm"
               onClick={handleGoogleLogin}
               disabled={loading}
               title="Entrar com Google"
@@ -478,22 +535,22 @@ export default function Login() {
               <i className="fab fa-google"></i>
             </button>
             <button 
-              className="social-btn w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-700 text-base border border-gray-200 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300"
+              className="social-btn w-12 h-12 rounded-xl flex items-center justify-center bg-white text-gray-700 text-base border border-gray-300 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 shadow-sm"
               title="Entrar com Facebook"
             >
               <i className="fab fa-facebook-f"></i>
             </button>
             <button 
-              className="social-btn w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-700 text-base border border-gray-200 hover:bg-black hover:text-white transition-all duration-300"
+              className="social-btn w-12 h-12 rounded-xl flex items-center justify-center bg-white text-gray-700 text-base border border-gray-300 hover:bg-gray-800 hover:text-white transition-all duration-300 shadow-sm"
               title="Entrar com Apple"
             >
               <i className="fab fa-apple"></i>
             </button>
           </div>
           
-          <div className="signup-link text-center text-gray-500 text-xs animate-fadeIn" style={{ animationDelay: "1.2s" }}>
+          <div className="signup-link text-center text-gray-600 text-sm animate-fadeIn" style={{ animationDelay: "1.2s" }}>
             {t('loginNaoTemConta') || "Não tem uma conta?"}{' '}
-            <a href="/signup" className="text-[#7E22CE] font-semibold hover:underline transition-colors duration-300">
+            <a href="/signup" className="text-[#7E22CE] font-semibold hover:text-[#2563EB] hover:underline transition-colors duration-300">
               {t('loginCadastrarAgora') || "Cadastre-se agora"}
             </a>
           </div>

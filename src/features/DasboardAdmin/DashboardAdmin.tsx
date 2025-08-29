@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+
+// WebSocket para atualização em tempo real
+const WS_URL = 'ws://localhost:3001'; // ajuste para sua URL real
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -108,18 +111,21 @@ const DashboardAdmin = () => {
   });
 
   // Buscar hospitais do backend (simples, só para demo)
+  // WebSocket para hospitais
+  const ws = useRef<WebSocket | null>(null);
   useEffect(() => {
-    const fetchHospitals = async () => {
-      setLoadingHospitals(true);
+    setLoadingHospitals(true);
+    // Fetch inicial
+    axios.get('/hospitais').then(res => setHospitals(res.data)).catch(() => setHospitals([])).finally(() => setLoadingHospitals(false));
+    // WebSocket
+    ws.current = new window.WebSocket(WS_URL + '/hospitais');
+    ws.current.onmessage = (event) => {
       try {
-        const res = await axios.get('/hospitais');
-        setHospitals(res.data);
-      } catch (e) {
-        setHospitals([]);
-      }
-      setLoadingHospitals(false);
+        const data = JSON.parse(event.data);
+        if (Array.isArray(data)) setHospitals(data);
+      } catch {}
     };
-    fetchHospitals();
+    return () => { ws.current?.close(); };
   }, []);
 
   const handleHospitalInput = (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>) => {

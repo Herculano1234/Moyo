@@ -263,7 +263,38 @@ app.post("/profissionais", async (req, res) => {
   }
 });
 // Cadastrar hospital ou clínica
+
+// Cadastrar hospital ou clínica
 app.post("/hospitais", async (req, res) => {
+  const {
+    nome,
+    endereco,
+    cidade,
+    provincia,
+    latitude,
+    longitude,
+    areas_trabalho,
+    exames_disponiveis,
+    telefone,
+    email,
+    site,
+    capacidade = 0,
+    status = 'ativo'
+  } = req.body;
+  if (!nome) return res.status(400).json({ error: "Campo nome é obrigatório" });
+  try {
+    const result = await pool.query(
+      `INSERT INTO hospitais (nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, capacidade, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, capacidade, status]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Erro ao cadastrar hospital:", err);
+    res.status(500).json({ error: "Erro ao cadastrar hospital", detalhes: err.message });
+  }
+});
+
 // Editar hospital ou clínica
 app.put("/hospitais/:id", async (req, res) => {
   const { id } = req.params;
@@ -278,12 +309,14 @@ app.put("/hospitais/:id", async (req, res) => {
     exames_disponiveis,
     telefone,
     email,
-    site
+    site,
+    capacidade = 0,
+    status = 'ativo'
   } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE hospitais SET nome=$1, endereco=$2, cidade=$3, provincia=$4, latitude=$5, longitude=$6, areas_trabalho=$7, exames_disponiveis=$8, telefone=$9, email=$10, site=$11 WHERE id=$12 RETURNING *`,
-      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, id]
+      `UPDATE hospitais SET nome=$1, endereco=$2, cidade=$3, provincia=$4, latitude=$5, longitude=$6, areas_trabalho=$7, exames_disponiveis=$8, telefone=$9, email=$10, site=$11, capacidade=$12, status=$13 WHERE id=$14 RETURNING *`,
+      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, capacidade, status, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Hospital não encontrado" });
     res.json(result.rows[0]);
@@ -303,32 +336,6 @@ app.delete("/hospitais/:id", async (req, res) => {
   } catch (err) {
     console.error("Erro ao remover hospital:", err);
     res.status(500).json({ error: "Erro ao remover hospital", detalhes: err.message });
-  }
-});
-  const {
-    nome,
-    endereco,
-    cidade,
-    provincia,
-    latitude,
-    longitude,
-    areas_trabalho,
-    exames_disponiveis,
-    telefone,
-    email,
-    site
-  } = req.body;
-  if (!nome) return res.status(400).json({ error: "Campo nome é obrigatório" });
-  try {
-    const result = await pool.query(
-      `INSERT INTO hospitais (nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error("Erro ao cadastrar hospital:", err);
-    res.status(500).json({ error: "Erro ao cadastrar hospital", detalhes: err.message });
   }
 });
 
