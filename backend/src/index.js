@@ -1,5 +1,3 @@
-
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -278,15 +276,43 @@ app.post("/hospitais", async (req, res) => {
     telefone,
     email,
     site,
+    tipo_unidade,
+    categoria,
+    nivel,
+    data_fundacao,
+    redes_sociais,
+    diretor,
+    cargo_diretor,
+    nif,
+    horario,
     capacidade = 0,
+    num_medicos,
+    num_enfermeiros,
+    capacidade_internamento,
+    urgencia,
+    salas_cirurgia,
+    especialidades,
+    laboratorio,
+    farmacia,
+    banco_sangue,
+    servicos_imagem,
+    ambulancia,
+    seguradoras,
+    acessibilidade,
+    estacionamento,
     status = 'ativo'
   } = req.body;
   if (!nome) return res.status(400).json({ error: "Campo nome é obrigatório" });
   try {
     const result = await pool.query(
-      `INSERT INTO hospitais (nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, capacidade, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, capacidade, status]
+      `INSERT INTO hospitais (
+        nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35
+      ) RETURNING *`,
+      [
+        nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status
+      ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -310,13 +336,38 @@ app.put("/hospitais/:id", async (req, res) => {
     telefone,
     email,
     site,
+    tipo_unidade,
+    categoria,
+    nivel,
+    data_fundacao,
+    redes_sociais,
+    diretor,
+    cargo_diretor,
+    nif,
+    horario,
     capacidade = 0,
+    num_medicos,
+    num_enfermeiros,
+    capacidade_internamento,
+    urgencia,
+    salas_cirurgia,
+    especialidades,
+    laboratorio,
+    farmacia,
+    banco_sangue,
+    servicos_imagem,
+    ambulancia,
+    seguradoras,
+    acessibilidade,
+    estacionamento,
     status = 'ativo'
   } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE hospitais SET nome=$1, endereco=$2, cidade=$3, provincia=$4, latitude=$5, longitude=$6, areas_trabalho=$7, exames_disponiveis=$8, telefone=$9, email=$10, site=$11, capacidade=$12, status=$13 WHERE id=$14 RETURNING *`,
-      [nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, capacidade, status, id]
+      `UPDATE hospitais SET nome=$1, endereco=$2, cidade=$3, provincia=$4, latitude=$5, longitude=$6, areas_trabalho=$7, exames_disponiveis=$8, telefone=$9, email=$10, site=$11, tipo_unidade=$12, categoria=$13, nivel=$14, data_fundacao=$15, redes_sociais=$16, diretor=$17, cargo_diretor=$18, nif=$19, horario=$20, capacidade=$21, num_medicos=$22, num_enfermeiros=$23, capacidade_internamento=$24, urgencia=$25, salas_cirurgia=$26, especialidades=$27, laboratorio=$28, farmacia=$29, banco_sangue=$30, servicos_imagem=$31, ambulancia=$32, seguradoras=$33, acessibilidade=$34, estacionamento=$35, status=$36 WHERE id=$37 RETURNING *`,
+      [
+        nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status, id
+      ]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Hospital não encontrado" });
     res.json(result.rows[0]);
