@@ -439,3 +439,60 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
+
+// ...existing code...
+
+// Listar administradores hospitalares
+app.get("/administradores_hospital", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT *, 'ativo' AS status FROM administradores_hospital ORDER BY id DESC");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar administradores hospitalares" });
+  }
+});
+
+// Cadastrar administrador hospitalar
+app.post("/administradores_hospital", async (req, res) => {
+  const { nome, email, telefone, foto_url, data_nascimento, senha } = req.body;
+  if (!nome || !email || !senha) return res.status(400).json({ error: "Campos obrigatórios" });
+  try {
+    // Use hash de senha em produção!
+    await pool.query(
+      `INSERT INTO administradores_hospital (nome, email, telefone, foto_url, data_nascimento, senha)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [nome, email, telefone, foto_url, data_nascimento, senha]
+    );
+    res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao cadastrar administrador hospitalar" });
+  }
+});
+
+// Editar administrador hospitalar
+app.put("/administradores_hospital/:id", async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, telefone, foto_url, data_nascimento, senha } = req.body;
+  try {
+    await pool.query(
+      `UPDATE administradores_hospital SET nome=$1, email=$2, telefone=$3, foto_url=$4, data_nascimento=$5, senha=$6 WHERE id=$7`,
+      [nome, email, telefone, foto_url, data_nascimento, senha, id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao atualizar administrador hospitalar" });
+  }
+});
+
+// Excluir administrador hospitalar
+app.delete("/administradores_hospital/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("DELETE FROM administradores_hospital WHERE id=$1", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao excluir administrador hospitalar" });
+  }
+});
+
+// ...existing code...
