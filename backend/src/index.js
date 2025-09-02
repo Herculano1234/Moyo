@@ -321,7 +321,7 @@ app.post("/hospitais", async (req, res) => {
       `INSERT INTO hospitais (nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36)
       RETURNING *`,
-      [values]
+      values
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

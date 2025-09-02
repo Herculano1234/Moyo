@@ -117,6 +117,8 @@ const initialForm: HospitalFormType = {
 };
 
 const HospitalAdmin: React.FC = () => {
+  // ...existing code...
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   // Hospitais do backend
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loadingHospitals, setLoadingHospitals] = useState(false);
@@ -776,7 +778,7 @@ const HospitalAdmin: React.FC = () => {
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
                             {filteredHospitals.map((hospital) => (
-                              <tr key={hospital.id} className="hover:bg-gray-50 transition-colors">
+                              <tr key={hospital.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedHospital(hospital)}>
                                 <td className="px-6 py-4 whitespace-nowrap font-medium">{hospital.nome || hospital.name}</td>
                                 <td className="px-6 py-4">{hospital.endereco || hospital.address}</td>
                                 <td className="px-6 py-4">{hospital.capacidade || hospital.capacity || '-'} leitos</td>
@@ -789,7 +791,7 @@ const HospitalAdmin: React.FC = () => {
                                     {(hospital.status === 'ativo' || hospital.status === 'Ativo') ? 'Ativo' : 'Em manutenção'}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-6 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                                   <div className="flex space-x-2">
                                     <button className="text-blue-500 hover:text-blue-700" title="Editar" onClick={() => openEditHospital(hospital)}>
                                       <i className="fas fa-edit"></i>
@@ -798,6 +800,55 @@ const HospitalAdmin: React.FC = () => {
                                       <i className="fas fa-trash"></i>
                                     </button>
                                   </div>
+                  {/* Modal de detalhes do hospital */}
+                  {selectedHospital && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-fadeIn">
+                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 relative animate-slideUp">
+                        <button className="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl transition-colors z-10" onClick={() => setSelectedHospital(null)}>
+                          <i className="fas fa-times"></i>
+                        </button>
+                        <h2 className="text-2xl font-bold mb-4 text-blue-700">Detalhes do Hospital</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <strong>Nome:</strong> {selectedHospital.nome || selectedHospital.name}<br/>
+                            <strong>Endereço:</strong> {selectedHospital.endereco || selectedHospital.address}<br/>
+                            <strong>Cidade:</strong> {selectedHospital.cidade}<br/>
+                            <strong>Província:</strong> {selectedHospital.provincia}<br/>
+                            <strong>Latitude:</strong> {selectedHospital.latitude}<br/>
+                            <strong>Longitude:</strong> {selectedHospital.longitude}<br/>
+                            <strong>Capacidade:</strong> {selectedHospital.capacidade || selectedHospital.capacity}<br/>
+                            <strong>Especialidades:</strong> {selectedHospital.especialidades}<br/>
+                            <strong>Áreas de Trabalho:</strong> {selectedHospital.areas_trabalho || selectedHospital.specialties}<br/>
+                            <strong>Exames Disponíveis:</strong> {selectedHospital.exames_disponiveis}<br/>
+                          </div>
+                          <div>
+                            <strong>Telefone:</strong> {selectedHospital.telefone}<br/>
+                            <strong>Email:</strong> {selectedHospital.email}<br/>
+                            <strong>Site:</strong> {selectedHospital.site}<br/>
+                            <strong>Tipo de Unidade:</strong> {selectedHospital.tipo_unidade}<br/>
+                            <strong>Categoria:</strong> {selectedHospital.categoria}<br/>
+                            <strong>Nível:</strong> {selectedHospital.nivel}<br/>
+                            <strong>Data Fundação:</strong> {selectedHospital.data_fundacao}<br/>
+                            <strong>Diretor:</strong> {selectedHospital.diretor}<br/>
+                            <strong>Cargo Diretor:</strong> {selectedHospital.cargo_diretor}<br/>
+                            <strong>NIF:</strong> {selectedHospital.nif}<br/>
+                            <strong>Horário:</strong> {selectedHospital.horario}<br/>
+                            <strong>Status:</strong> {selectedHospital.status}<br/>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <strong>Laboratório:</strong> {selectedHospital.laboratorio}<br/>
+                          <strong>Farmácia:</strong> {selectedHospital.farmacia}<br/>
+                          <strong>Banco de Sangue:</strong> {selectedHospital.banco_sangue}<br/>
+                          <strong>Serviços de Imagem:</strong> {selectedHospital.servicos_imagem}<br/>
+                          <strong>Ambulância:</strong> {selectedHospital.ambulancia}<br/>
+                          <strong>Seguradoras:</strong> {selectedHospital.seguradoras}<br/>
+                          <strong>Acessibilidade:</strong> {selectedHospital.acessibilidade}<br/>
+                          <strong>Estacionamento:</strong> {selectedHospital.estacionamento}<br/>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                                 </td>
                               </tr>
                             ))}
