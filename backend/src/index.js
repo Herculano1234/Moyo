@@ -264,7 +264,7 @@ app.post("/profissionais", async (req, res) => {
 
 // Cadastrar hospital ou clínica
 app.post("/hospitais", async (req, res) => {
-  const {
+  let {
     nome,
     endereco,
     cidade,
@@ -302,17 +302,26 @@ app.post("/hospitais", async (req, res) => {
     estacionamento,
     status = 'ativo'
   } = req.body;
+
+  // Converter arrays para string, se necessário
+  if (Array.isArray(especialidades)) {
+    especialidades = especialidades.join(',');
+  }
+  if (Array.isArray(exames_disponiveis)) {
+    exames_disponiveis = exames_disponiveis.join(',');
+  }
+  // Garantir que todos os campos estejam definidos
+  const safe = v => v === undefined ? '' : v;
+  const values = [
+    safe(nome), safe(endereco), safe(cidade), safe(provincia), safe(latitude), safe(longitude), safe(areas_trabalho), safe(exames_disponiveis), safe(telefone), safe(email), safe(site), safe(tipo_unidade), safe(categoria), safe(nivel), safe(data_fundacao), safe(redes_sociais), safe(diretor), safe(cargo_diretor), safe(nif), safe(horario), safe(capacidade), safe(num_medicos), safe(num_enfermeiros), safe(capacidade_internamento), safe(urgencia), safe(salas_cirurgia), safe(especialidades), safe(laboratorio), safe(farmacia), safe(banco_sangue), safe(servicos_imagem), safe(ambulancia), safe(seguradoras), safe(acessibilidade), safe(estacionamento), safe(status)
+  ];
   if (!nome) return res.status(400).json({ error: "Campo nome é obrigatório" });
   try {
     const result = await pool.query(
-      `INSERT INTO hospitais (
-        nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35
-      ) RETURNING *`,
-      [
-        nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status
-      ]
+      `INSERT INTO hospitais (nome, endereco, cidade, provincia, latitude, longitude, areas_trabalho, exames_disponiveis, telefone, email, site, tipo_unidade, categoria, nivel, data_fundacao, redes_sociais, diretor, cargo_diretor, nif, horario, capacidade, num_medicos, num_enfermeiros, capacidade_internamento, urgencia, salas_cirurgia, especialidades, laboratorio, farmacia, banco_sangue, servicos_imagem, ambulancia, seguradoras, acessibilidade, estacionamento, status)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36)
+      RETURNING *`,
+      [values]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -324,7 +333,7 @@ app.post("/hospitais", async (req, res) => {
 // Editar hospital ou clínica
 app.put("/hospitais/:id", async (req, res) => {
   const { id } = req.params;
-  const {
+  let {
     nome,
     endereco,
     cidade,
@@ -362,6 +371,14 @@ app.put("/hospitais/:id", async (req, res) => {
     estacionamento,
     status = 'ativo'
   } = req.body;
+
+  // Converter arrays para string, se necessário
+  if (Array.isArray(especialidades)) {
+    especialidades = especialidades.join(',');
+  }
+  if (Array.isArray(exames_disponiveis)) {
+    exames_disponiveis = exames_disponiveis.join(',');
+  }
   try {
     const result = await pool.query(
       `UPDATE hospitais SET nome=$1, endereco=$2, cidade=$3, provincia=$4, latitude=$5, longitude=$6, areas_trabalho=$7, exames_disponiveis=$8, telefone=$9, email=$10, site=$11, tipo_unidade=$12, categoria=$13, nivel=$14, data_fundacao=$15, redes_sociais=$16, diretor=$17, cargo_diretor=$18, nif=$19, horario=$20, capacidade=$21, num_medicos=$22, num_enfermeiros=$23, capacidade_internamento=$24, urgencia=$25, salas_cirurgia=$26, especialidades=$27, laboratorio=$28, farmacia=$29, banco_sangue=$30, servicos_imagem=$31, ambulancia=$32, seguradoras=$33, acessibilidade=$34, estacionamento=$35, status=$36 WHERE id=$37 RETURNING *`,

@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS hospitais (
     seguradoras TEXT,
     acessibilidade VARCHAR(10),
     estacionamento VARCHAR(100),
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(30) DEFAULT 'ativo'
+    status VARCHAR(30),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -89,7 +89,3 @@ CREATE TABLE IF NOT EXISTS consultas (
     local VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- Adicionar campos para indicadores na tabela hospitais
-ALTER TABLE hospitais
-ADD COLUMN IF NOT EXISTS capacidade INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'ativo';

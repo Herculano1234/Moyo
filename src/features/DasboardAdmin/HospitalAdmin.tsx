@@ -2,8 +2,13 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
+// Configurar baseURL do axios para backend local
+if (process.env.NODE_ENV === 'development') {
+  axios.defaults.baseURL = 'http://localhost:4000';
+}
+
 // WebSocket para atualização em tempo real
-const WS_URL = 'ws://localhost:3001'; // ajuste para sua URL real
+const WS_URL = 'http://localhost:4000'; // ajuste para sua URL real
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -236,7 +241,7 @@ const HospitalAdmin: React.FC = () => {
       banco_sangue: hospital.banco_sangue || '',
       servicos_imagem: hospital.servicos_imagem || '',
       ambulancia: hospital.ambulancia || '',
-      seguradoras: hospital.seguradoras || '',
+      seguradoras: hospital.seguradoras,
       acessibilidade: hospital.acessibilidade || '',
       estacionamento: hospital.estacionamento || ''
     });
@@ -297,7 +302,7 @@ const HospitalAdmin: React.FC = () => {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Tipo de Unidade</label>
-                                <select className="w-full border p-2 rounded" name="tipo_unidade" value={hospitalForm.tipo_unidade || ''} onChange={handleHospitalInput}>
+                                <select className="w-full border p-2 rounded" name="tipo_unidade" value={hospitalForm.tipo_unidade} onChange={handleHospitalInput}>
                                   <option value="">Selecione</option>
                                   <option>Hospital Geral</option>
                                   <option>Clínica</option>
@@ -394,7 +399,7 @@ const HospitalAdmin: React.FC = () => {
                             </div>
                             <div>
                               <label className="block text-gray-700 font-semibold mb-1">NIF / Registro Legal</label>
-                              <input className="w-full border p-2 rounded" name="nif" value={hospitalForm.nif || ''} onChange={handleHospitalInput} />
+                              <input className="w-full border p-2 rounded" name="nif" value={hospitalForm.nif} onChange={handleHospitalInput} />
                             </div>
                             <div>
                               <label className="block text-gray-700 font-semibold mb-1">Horário de Funcionamento</label>
@@ -406,17 +411,17 @@ const HospitalAdmin: React.FC = () => {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Número de Leitos</label>
-                                <input type="number" className="w-full border p-2 rounded" name="capacidade" value={hospitalForm.capacidade || ''} onChange={handleHospitalInput} />
+                                <input type="number" className="w-full border p-2 rounded" name="capacidade" value={hospitalForm.capacidade} onChange={handleHospitalInput} />
                               </div>
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Nº de Médicos</label>
-                                <input type="number" className="w-full border p-2 rounded" name="num_medicos" value={hospitalForm.num_medicos || ''} onChange={handleHospitalInput} />
+                                <input type="number" className="w-full border p-2 rounded" name="num_medicos" value={hospitalForm.num_medicos} onChange={handleHospitalInput} />
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Nº de Enfermeiros</label>
-                                <input type="number" className="w-full border p-2 rounded" name="num_enfermeiros" value={hospitalForm.num_enfermeiros || ''} onChange={handleHospitalInput} />
+                                <input type="number" className="w-full border p-2 rounded" name="num_enfermeiros" value={hospitalForm.num_enfermeiros} onChange={handleHospitalInput} />
                               </div>
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Capacidade de Internamento</label>
@@ -426,7 +431,7 @@ const HospitalAdmin: React.FC = () => {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Serviço de Urgência/Emergência</label>
-                                <select className="w-full border p-2 rounded" name="urgencia" value={hospitalForm.urgencia || ''} onChange={handleHospitalInput}>
+                                <select className="w-full border p-2 rounded" name="urgencia" value={hospitalForm.urgencia} onChange={handleHospitalInput}>
                                   <option value="">Selecione</option>
                                   <option>Sim</option>
                                   <option>Não</option>
@@ -434,7 +439,7 @@ const HospitalAdmin: React.FC = () => {
                               </div>
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Salas de Cirurgia</label>
-                                <input className="w-full border p-2 rounded" name="salas_cirurgia" placeholder="Sim/Não + quantidade" value={hospitalForm.salas_cirurgia || ''} onChange={handleHospitalInput} />
+                                <input className="w-full border p-2 rounded" name="salas_cirurgia" placeholder="Sim/Não + quantidade" value={hospitalForm.salas_cirurgia} onChange={handleHospitalInput} />
                               </div>
                             </div>
                           </div>
@@ -546,7 +551,7 @@ const HospitalAdmin: React.FC = () => {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Banco de Sangue</label>
-                                <select className="w-full border p-2 rounded" name="banco_sangue" value={hospitalForm.banco_sangue || ''} onChange={handleHospitalInput}>
+                                <select className="w-full border p-2 rounded" name="banco_sangue" value={hospitalForm.banco_sangue} onChange={handleHospitalInput}>
                                   <option value="">Selecione</option>
                                   <option>Sim</option>
                                   <option>Não</option>
@@ -560,7 +565,7 @@ const HospitalAdmin: React.FC = () => {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Serviço de Ambulância</label>
-                                <select className="w-full border p-2 rounded" name="ambulancia" value={hospitalForm.ambulancia || ''} onChange={handleHospitalInput}>
+                                <select className="w-full border p-2 rounded" name="ambulancia" value={hospitalForm.ambulancia} onChange={handleHospitalInput}>
                                   <option value="">Selecione</option>
                                   <option>Sim</option>
                                   <option>Não</option>
@@ -568,7 +573,7 @@ const HospitalAdmin: React.FC = () => {
                               </div>
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Parceria com Seguradoras</label>
-                                <input className="w-full border p-2 rounded" name="seguradoras" placeholder="Ex: ENSA, Fidelidade..." value={hospitalForm.seguradoras || ''} onChange={handleHospitalInput} />
+                                <input className="w-full border p-2 rounded" name="seguradoras" placeholder="Ex: ENSA, Fidelidade..." value={hospitalForm.seguradoras} onChange={handleHospitalInput} />
                               </div>
                             </div>
                           </div>
@@ -577,7 +582,7 @@ const HospitalAdmin: React.FC = () => {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Acessibilidade para Deficientes</label>
-                                <select className="w-full border p-2 rounded" name="acessibilidade" value={hospitalForm.acessibilidade || ''} onChange={handleHospitalInput}>
+                                <select className="w-full border p-2 rounded" name="acessibilidade" value={hospitalForm.acessibilidade} onChange={handleHospitalInput}>
                                   <option value="">Selecione</option>
                                   <option>Sim</option>
                                   <option>Não</option>
@@ -585,7 +590,7 @@ const HospitalAdmin: React.FC = () => {
                               </div>
                               <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Estacionamento</label>
-                                <input className="w-full border p-2 rounded" name="estacionamento" placeholder="Sim/Não, nº de vagas" value={hospitalForm.estacionamento || ''} onChange={handleHospitalInput} />
+                                <input className="w-full border p-2 rounded" name="estacionamento" placeholder="Sim/Não, nº de vagas" value={hospitalForm.estacionamento} onChange={handleHospitalInput} />
                               </div>
                             </div>
                           </div>
