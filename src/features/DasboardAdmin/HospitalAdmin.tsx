@@ -32,6 +32,8 @@ interface Hospital {
   name?: string;
   endereco?: string;
   address?: string;
+  cidade?: string;
+  provincia?: string;
   capacidade?: number;
   capacity?: number;
   areas_trabalho?: string;
